@@ -1,29 +1,6 @@
+""" SMARTS definitions for the different chemical substructure sets."""
+
 # https://github.com/rdkit/rdkit-orig/blob/master/rdkit/Chem/MACCSkeys.py
-
-""" SMARTS definitions for the publically available MACCS keys
-and a MACCS fingerprinter
-
-I compared the MACCS fingerprints generated here with those from two
-other packages (not MDL, unfortunately). Of course there are
-disagreements between the various fingerprints still, but I think
-these definitions work pretty well. Some notes:
-
-1) most of the differences have to do with aromaticity
-2) there's a discrepancy sometimes because the current RDKit
-definitions do not require multiple matches to be distinct. e.g. the
-SMILES C(=O)CC(=O) can match the (hypothetical) key O=CC twice in my
-definition. It's not clear to me what the correct behavior is.
-3) Some keys are not fully defined in the MDL documentation
-4) Two keys, 125 and 166, have to be done outside of SMARTS.
-5) Key 1 (ISOTOPE) isn't defined
-
-Rev history:
-2006 (gl): Original open-source release
-May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
-
-"""
-# these are SMARTS patterns corresponding to the MDL MACCS keys
-
 smartsPatts = {
     1:('?',0), # ISOTOPE
     #2:('[#104,#105,#106,#107,#106,#109,#110,#111,#112]',0),  # atomic num >103 Not complete
@@ -195,3 +172,10 @@ smartsPatts = {
 }
 
 maccs_keys_to_skip = {1, 44, 125, 166}
+
+patterns_dict = {
+    'MACCS_FULL': {
+        'SMARTS': [(key, value[0]) for key, value in smartsPatts.items()],
+        'KEYS_TO_SKIP': maccs_keys_to_skip,
+    }
+}
