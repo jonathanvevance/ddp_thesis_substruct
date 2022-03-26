@@ -21,6 +21,8 @@ class reaction_record_dataset():
         self.SUBSTRUCTURE_KEYS = SUBSTRUCTURE_KEYS
         self.dataset_filepath = dataset_filepath
 
+        self.pyg_dataset = None # See https://towardsdatascience.com/hands-on-graph-neural-networks-with-pytorch-pytorch-geometric-359487e221a8
+
         self.process_reactions()
 
     def process_reactions(self):
@@ -42,5 +44,7 @@ class reaction_record_dataset():
 
                 all_atomidx_tuples, all_bonds_for_recon_sets = get_atomid_matches_and_bonds(lhs_mol, self.SUBSTRUCTURE_KEYS)
                 reaction = reaction_record(all_atomidx_tuples, all_bonds_for_recon_sets)
+
+                # process and prepare pyg_dataset
 
 
