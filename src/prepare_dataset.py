@@ -2,21 +2,19 @@
 
 import os
 
-from tqdm import tqdm
-from rdkit import Chem
-
-from data.dataset import reactionInfoDataset
+from data.dataset import reaction_record_dataset
 
 RAW_DATASET_PATH = 'data/raw/'
 SUBSTRUCTURE_KEYS = 'MACCS_FULL'
+SAVE_EVERY = 10000 # how often to save reactions (to continue running later)
 
 
 #! -----------------------------------------------------------------------------------------------------------
 # DATA PART
 
-# get substructure match tuples - CAN DO
-# for all non-substruct-atoms, mark bonds - CAN DO
-# for all substruct-atoms, mark bonds with atoms outside it - CAN DO
+# get substructure match tuples - DONE
+# for all non-substruct-atoms, mark bonds - DONE
+# for all substruct-atoms, mark bonds with atoms outside it - DONE
 
 # [targets] for each substructure-pair, are they interacting?
 #       a. If (A, B) have common atoms, interaction = 0
@@ -48,13 +46,13 @@ def prep_dataset():
     """Prepare datasets."""
 
     train_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'train.txt')
-    reactionInfoDataset(train_dataset_filepath, SUBSTRUCTURE_KEYS, mode = 'train')
+    reaction_record_dataset(train_dataset_filepath, SUBSTRUCTURE_KEYS, 'train', SAVE_EVERY)
 
     test_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'test.txt')
-    reactionInfoDataset(test_dataset_filepath, SUBSTRUCTURE_KEYS, mode = 'test')
+    reaction_record_dataset(test_dataset_filepath, SUBSTRUCTURE_KEYS, 'test', SAVE_EVERY)
 
     val_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'valid.txt')
-    reactionInfoDataset(val_dataset_filepath, SUBSTRUCTURE_KEYS, mode = 'val')
+    reaction_record_dataset(val_dataset_filepath, SUBSTRUCTURE_KEYS, 'val', SAVE_EVERY)
 
 
 if __name__ == '__main__':

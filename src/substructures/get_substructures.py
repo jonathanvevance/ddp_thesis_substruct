@@ -36,21 +36,17 @@ def get_atomid_matches_and_bonds(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
             matched_atom_ids = set(match_tuple)
             bonds_for_recon_this_match = set()
 
-            for match_atomid in match_tuple:
-                match_atom = mol.GetAtomWithIdx(match_atomid)
+            for bond in mol.GetBonds():
+                atom_id_1 = bond.GetBeginAtomIdx()
+                atom_id_2 = bond.GetEndAtomIdx()
 
-                for nbr_atom in match_atom.GetNeighbors():
+                if (atom_id_1 in matched_atom_ids) and (atom_id_2 in matched_atom_ids):
+                    continue
 
-                    if nbr_atom.GetIdx() in matched_atom_ids:
-                        continue
-
-                    bond_type = mol.GetBondBetweenAtoms(nbr_atom.GetIdx(), match_atomid).GetBondType()
-                    bond_already_added_case_1 = (nbr_atom.GetAtomMapNum(), match_atom.GetAtomMapNum(), bond_type) in bonds_for_recon_this_match
-                    bond_already_added_case_2 = (match_atom.GetAtomMapNum(), nbr_atom.GetAtomMapNum(), bond_type) in bonds_for_recon_this_match
-                    if bond_already_added_case_1 or bond_already_added_case_2:
-                        continue
-
-                    bonds_for_recon_this_match.add((nbr_atom.GetAtomMapNum(), match_atom.GetAtomMapNum(), bond_type))
+                atom_map_1 = mol.GetAtomWithIdx(atom_id_1)
+                atom_map_2 = mol.GetAtomWithIdx(atom_id_2)
+                bond_type = mol.GetBondBetweenAtoms(atom_id_1, atom_id_2).GetBondType()
+                bonds_for_recon_this_match.append((atom_map_1, atom_map_2, bond_type))
 
             all_atomidx_tuples.append(match_tuple)
             all_bonds_for_recon_sets.append(bonds_for_recon_this_match)
