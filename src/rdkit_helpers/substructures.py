@@ -3,8 +3,9 @@
 from rdkit import Chem
 
 from rdkit_helpers.substructure_keys import patterns_dict
+from rdkit_helpers.generic import get_atom_maps
 
-def get_atomid_matches_and_bonds(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
+def get_substruct_matches(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
     """
     Get tuples of atom indices corresponding to substructure matches.
 
@@ -19,8 +20,9 @@ def get_atomid_matches_and_bonds(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
 
     patterns = patterns_dict[SUBSTRUCTURE_KEYS]['SMARTS']
     keys_to_skip = patterns_dict[SUBSTRUCTURE_KEYS]['KEYS_TO_SKIP']
+    atom_id_to_atom_map = get_atom_maps(mol)
 
-    matching_atomidx_tuples = [] # tuples of atom ids for each substructure match
+    matching_atom_map_tuples = [] # tuples of atom ids for each substructure match
     recon_bonds_per_match = [] # bonds to reconstruct, for each match tuple
 
     for pattern_key, pattern_smarts in patterns:
@@ -43,12 +45,17 @@ def get_atomid_matches_and_bonds(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
                 if (atom_id_1 in matched_atom_ids) and (atom_id_2 in matched_atom_ids):
                     continue
 
-                atom_map_1 = mol.GetAtomWithIdx(atom_id_1).GetAtomMapNum()
-                atom_map_2 = mol.GetAtomWithIdx(atom_id_2).GetAtomMapNum()
+                atom_map_1 = atom_id_to_atom_map(atom_id_1)
+                atom_map_2 = atom_id_to_atom_map(atom_id_2)
                 bond_type = mol.GetBondBetweenAtoms(atom_id_1, atom_id_2).GetBondType()
                 bonds_for_recon_this_match.append((atom_map_1, atom_map_2, bond_type))
 
-            matching_atomidx_tuples.append(match_tuple)
+            atom_map_tuple = tuple(map(atom_id_to_atom_map, match_tuple))
+            matching_atom_map_tuples.append(atom_map_tuple)
             recon_bonds_per_match.append(bonds_for_recon_this_match)
 
-    return matching_atomidx_tuples, recon_bonds_per_match
+    substruct_matches = {
+        'matches': matching_atom_map_tuples,
+        'bonds': recon_bonds_per_match
+    }
+    return substruct_matches

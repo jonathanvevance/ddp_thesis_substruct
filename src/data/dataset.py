@@ -3,6 +3,7 @@ from tqdm import tqdm
 from rdkit import Chem
 
 from rdkit_helpers.substructures import get_substruct_matches
+from rdkit_helpers.features import get_pyg_dataset_requirements
 
 PROCESSED_DATASET_LOC = 'data/processed/'
 
@@ -20,6 +21,9 @@ class reaction_record:
 
 class reaction_record_dataset():
     """Class to hold all reaction information."""
+
+    #! IDEA: for idx -> choose dataset. Then sample one random entry from interaction matrix.
+    #! keep a 0 vs 1 balance and enforce that (class imbalance)
 
     def __init__(self, dataset_filepath, SUBSTRUCTURE_KEYS, mode='train', SAVE_EVERY=10000):
 
@@ -45,15 +49,16 @@ class reaction_record_dataset():
                 if rxn_num < start_from:
                     continue
 
-                lhs, rhs = reaction.split(">>")
-                lhs_mol = Chem.MolFromSmiles(lhs)
+                lhs_smiles, rhs_smiles = reaction.split(">>")
+                lhs_mol = Chem.MolFromSmiles(lhs_smiles)
 
-                matching_atomidx_tuples, recon_bonds_per_match = get_substruct_matches(lhs_mol, self.SUBSTRUCTURE_KEYS)
-                a = get_atom_feature_vectors(lhs_mol)
-                reaction = reaction_record(matching_atomidx_tuples, recon_bonds_per_match)
+                substruct_matches = get_substruct_matches(lhs_mol, self.SUBSTRUCTURE_KEYS)
+                pyg_requirements = get_pyg_dataset_requirements(lhs_mol)
+
+                reaction = reaction_record(pyg_requirements, substruct_matches)
 
                 # THINGS NEEDED in each reaction_record
-                # 1. RDKit feature vectors for each atom (np matrix)
-                # 2. 
+                # 1. RDKit feature vectors for each atom (np matrix) - YES
+                # 2.
 
 
