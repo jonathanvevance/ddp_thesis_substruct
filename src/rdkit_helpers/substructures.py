@@ -2,7 +2,7 @@
 
 from rdkit import Chem
 
-from substructures.substructure_keys import patterns_dict
+from rdkit_helpers.substructure_keys import patterns_dict
 
 def get_atomid_matches_and_bonds(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
     """
@@ -20,8 +20,8 @@ def get_atomid_matches_and_bonds(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
     patterns = patterns_dict[SUBSTRUCTURE_KEYS]['SMARTS']
     keys_to_skip = patterns_dict[SUBSTRUCTURE_KEYS]['KEYS_TO_SKIP']
 
-    all_atomidx_tuples = [] # tuples of atom ids for each substructure match
-    all_bonds_for_recon_sets = [] # bonds to reconstruct, for each match tuple
+    matching_atomidx_tuples = [] # tuples of atom ids for each substructure match
+    recon_bonds_per_match = [] # bonds to reconstruct, for each match tuple
 
     for pattern_key, pattern_smarts in patterns:
 
@@ -43,12 +43,12 @@ def get_atomid_matches_and_bonds(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
                 if (atom_id_1 in matched_atom_ids) and (atom_id_2 in matched_atom_ids):
                     continue
 
-                atom_map_1 = mol.GetAtomWithIdx(atom_id_1)
-                atom_map_2 = mol.GetAtomWithIdx(atom_id_2)
+                atom_map_1 = mol.GetAtomWithIdx(atom_id_1).GetAtomMapNum()
+                atom_map_2 = mol.GetAtomWithIdx(atom_id_2).GetAtomMapNum()
                 bond_type = mol.GetBondBetweenAtoms(atom_id_1, atom_id_2).GetBondType()
                 bonds_for_recon_this_match.append((atom_map_1, atom_map_2, bond_type))
 
-            all_atomidx_tuples.append(match_tuple)
-            all_bonds_for_recon_sets.append(bonds_for_recon_this_match)
+            matching_atomidx_tuples.append(match_tuple)
+            recon_bonds_per_match.append(bonds_for_recon_this_match)
 
-    return all_atomidx_tuples, all_bonds_for_recon_sets
+    return matching_atomidx_tuples, recon_bonds_per_match
