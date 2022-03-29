@@ -3,7 +3,7 @@
 import numpy as np
 from rdkit import Chem
 
-def get_pyg_dataset_requirements(mol):
+def get_pyg_graph_requirements(mol):
 
     num_atom_features = 2
     num_bond_features = 2

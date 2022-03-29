@@ -3,7 +3,7 @@ from tqdm import tqdm
 from rdkit import Chem
 
 from rdkit_helpers.substructures import get_substruct_matches
-from rdkit_helpers.features import get_pyg_dataset_requirements
+from rdkit_helpers.features import get_pyg_graph_requirements
 
 PROCESSED_DATASET_LOC = 'data/processed/'
 
@@ -53,7 +53,7 @@ class reaction_record_dataset():
                 lhs_mol = Chem.MolFromSmiles(lhs_smiles)
 
                 substruct_matches = get_substruct_matches(lhs_mol, self.SUBSTRUCTURE_KEYS)
-                pyg_requirements = get_pyg_dataset_requirements(lhs_mol)
+                pyg_requirements = get_pyg_graph_requirements(lhs_mol)
 
                 reaction = reaction_record(pyg_requirements, substruct_matches)
 
