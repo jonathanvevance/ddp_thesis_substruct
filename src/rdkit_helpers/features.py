@@ -10,9 +10,14 @@ def get_pyg_graph_requirements(mol):
     num_atoms = mol.GetNumAtoms()
     num_bonds = mol.GetNumBonds()
 
-    x = [[None for __ in range(num_atom_features)] for __ in range(num_atoms)] # (num_atoms x num_atom_features)
-    edge_index = [[None for __ in range(num_bonds)] for __ in range(2)] # (2 x num_bonds)
-    edge_attr = [[None for __ in range(num_bond_features)] for __ in range(num_bonds)] # (num_bonds x num_bond_features)
+    x = [[None for __ in range(num_atom_features)]
+               for __ in range(num_atoms)] # (num_atoms x num_atom_features)
+
+    edge_index = [[None for __ in range(num_bonds)]
+                        for __ in range(2)] # (2 x num_bonds)
+
+    edge_attr = [[None for __ in range(num_bond_features)]
+                       for __ in range(num_bonds)] # (num_bonds x num_bond_features)
 
     for atom in mol.GetAtoms():
         atom_idx = atom.GetAtomMapNum() - 1
