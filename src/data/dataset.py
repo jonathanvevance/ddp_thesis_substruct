@@ -35,7 +35,7 @@ class reaction_record(Data):
 
         self.substruct_pair_targets = []
         self.substruct_pair_selectors = []
-        self.substruct_paur_recon_bonds = []
+        self.substruct_pair_recon_bonds = []
 
         self.process_substruct_pairs(
             lhs_mol,
@@ -51,7 +51,7 @@ class reaction_record(Data):
         lhs_mol,
         rhs_mol,
         matching_atom_map_tuples,
-        recon_bonds_per_match, #! this is remaining
+        recon_bonds_per_match,
         lhs_map_to_id_dicts,
         rhs_map_to_id_dicts,
     ):
@@ -59,6 +59,11 @@ class reaction_record(Data):
         for i in range(len(matching_atom_map_tuples)):
             for j in range(i + 1, len(matching_atom_map_tuples)):
 
+                # if any common atom, ignore this substructure pair
+                if len(set(atom_map_tuple_i).intersection(atom_map_tuple_j)):
+                    continue
+
+                # ----- multi-hot selectors
                 selector = np.zeros(len(matching_atom_map_tuples))
                 atom_map_tuple_i = matching_atom_map_tuples[i]
                 atom_map_tuple_j = matching_atom_map_tuples[j]
@@ -66,37 +71,42 @@ class reaction_record(Data):
                 selector[list(all_atom_maps)] = 1
                 self.substruct_pair_selectors.append(selector)
 
-                # if any common atom, no interaction
-                if len(set(atom_map_tuple_i).intersection(atom_map_tuple_j)):
-                    self.substruct_pair_targets.append(0)
+                # ----- interaction targets
+                interacting = False
+                all_atom_pairs_tuples = nested2d_generator(
+                    atom_map_tuple_i, atom_map_tuple_j
+                )
 
-                else:
-                    interacting = False
-                    all_atom_pairs_tuples = nested2d_generator(
-                        atom_map_tuple_i, atom_map_tuple_j
-                    )
+                for atom_map_i, atom_map_j in all_atom_pairs_tuples:
 
-                    for atom_map_i, atom_map_j in all_atom_pairs_tuples:
-
-                        lhs_id_i = lhs_map_to_id_dicts[atom_map_i]
-                        lhs_id_j = lhs_map_to_id_dicts[atom_map_j]
+                    lhs_id_i = lhs_map_to_id_dicts[atom_map_i]
+                    lhs_id_j = lhs_map_to_id_dicts[atom_map_j]
+                    try:
                         rhs_id_i = rhs_map_to_id_dicts[atom_map_i]
                         rhs_id_j = rhs_map_to_id_dicts[atom_map_j]
+                    except KeyError:
+                        continue # atom_map does not exist on RHS
 
-                        bond_lhs = lhs_mol.GetBondBetweenAtoms(lhs_id_i, lhs_id_j)
+                    bond_lhs = lhs_mol.GetBondBetweenAtoms(lhs_id_i, lhs_id_j)
 
-                        if bond_lhs:
-                            continue
+                    if bond_lhs: # bond already exists on LHS
+                        continue # hence, bond_rhs does not indicate interaction
 
-                        bond_rhs = rhs_mol.GetBondBetweenAtoms(rhs_id_i, rhs_id_j)
-                        if bond_rhs:
-                            interacting = True
-                            break
+                    bond_rhs = rhs_mol.GetBondBetweenAtoms(rhs_id_i, rhs_id_j)
+                    if bond_rhs:
+                        interacting = True
+                        break
 
-                    if interacting:
-                        self.substruct_pair_targets.append(1)
-                    else:
-                        self.substruct_pair_targets.append(0)
+                if interacting:
+                    self.substruct_pair_targets.append(1)
+                else:
+                    self.substruct_pair_targets.append(0)
+
+                # ----- recon bonds for this substructure pair
+                self.substruct_pair_recon_bonds.append(
+                    set(recon_bonds_per_match[i]).intersection(recon_bonds_per_match[j])
+                )
+
 
 
 class reaction_record_dataset():
