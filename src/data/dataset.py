@@ -39,6 +39,7 @@ class reaction_record:
         self.substruct_pair_selectors = []
         self.substruct_pair_recon_bonds = []
 
+        # TODO: make this on the fly
         self.process_substruct_pairs(
             lhs_mol,
             rhs_mol,
@@ -113,10 +114,6 @@ class reaction_record:
 
 class reaction_record_dataset(Dataset):
     """Class to hold all reaction information."""
-
-    #! IDEA: for idx -> choose dataset. Then sample one random entry from interaction matrix.
-    #! keep a 0 vs 1 balance and enforce that (class imbalance)
-
     def __init__(
         self,
         dataset_filepath,
@@ -177,6 +174,7 @@ class reaction_record_dataset(Dataset):
         return len(self.processed_filepaths)
 
     def get(self, idx):
+        # TODO: get a substructure pair target also (return tuple)
         processed_filepath = self.processed_filepaths[idx]
         reaction_data = torch.load(processed_filepath)
         return reaction_data.pyg_data
