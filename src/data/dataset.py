@@ -1,6 +1,7 @@
 """Python file with dataset classes defined."""
 
 import os
+import random
 import torch
 import numpy as np
 from tqdm import tqdm
@@ -16,17 +17,17 @@ from rdkit_helpers.features import get_pyg_graph_requirements
 PROCESSED_DATASET_LOC = 'data/processed/'
 
 class reaction_record:
-    def __init__(self, reaction, SUBSTRUCTURE_KEYS):
+    def __init__(self, reaction_smiles, SUBSTRUCTURE_KEYS):
 
-        lhs_smiles, rhs_smiles = reaction.split(">>")
-        lhs_mol = Chem.MolFromSmiles(lhs_smiles)
-        rhs_mol = Chem.MolFromSmiles(rhs_smiles)
+        lhs_smiles, rhs_smiles = reaction_smiles.split(">>")
+        self.lhs_mol = Chem.MolFromSmiles(lhs_smiles)
+        self.rhs_mol = Chem.MolFromSmiles(rhs_smiles)
 
-        substruct_matches = get_substruct_matches(lhs_mol, SUBSTRUCTURE_KEYS)
-        pyg_requirements = get_pyg_graph_requirements(lhs_mol)
-        map_to_id_dicts = {
-            'lhs': get_map_to_id_dict(lhs_mol),
-            'rhs': get_map_to_id_dict(rhs_mol),
+        pyg_requirements = get_pyg_graph_requirements(self.lhs_mol)
+        self.substruct_matches = get_substruct_matches(self.lhs_mol, SUBSTRUCTURE_KEYS)
+        self.map_to_id_dicts = {
+            'lhs': get_map_to_id_dict(self.lhs_mol),
+            'rhs': get_map_to_id_dict(self.rhs_mol),
         }
 
         self.pyg_data = Data(
@@ -35,81 +36,70 @@ class reaction_record:
             edge_attr = torch.tensor(pyg_requirements['edge_attr']),
         )
 
-        self.substruct_pair_targets = []
-        self.substruct_pair_selectors = []
-        self.substruct_pair_recon_bonds = []
+        self.valid_pairs_substructs = []
+        self.save_valid_suibstruct_pairs()
 
-        # TODO: make this on the fly
-        self.process_substruct_pairs(
-            lhs_mol,
-            rhs_mol,
-            substruct_matches['matches'],
-            substruct_matches['bonds'],
-            map_to_id_dicts['lhs'],
-            map_to_id_dicts['rhs'],
-        )
+    def save_valid_suibstruct_pairs(self):
+        """Records valid substructure pairs."""
+        for i in range(len(self.substruct_matches['matches'])):
+            for j in range(i + 1, len(self.substruct_matches['matches'])):
 
-    def process_substruct_pairs(
-        self,
-        lhs_mol,
-        rhs_mol,
-        matching_atom_map_tuples,
-        recon_bonds_per_match,
-        lhs_map_to_id_dicts,
-        rhs_map_to_id_dicts,
-    ):
-
-        for i in range(len(matching_atom_map_tuples)):
-            for j in range(i + 1, len(matching_atom_map_tuples)):
-
-                atom_map_tuple_i = matching_atom_map_tuples[i]
-                atom_map_tuple_j = matching_atom_map_tuples[j]
+                atom_map_tuple_i = self.substruct_matches['matches'][i]
+                atom_map_tuple_j = self.substruct_matches['matches'][j]
 
                 # if any common atom, ignore this substructure pair
                 if len(set(atom_map_tuple_i).intersection(atom_map_tuple_j)):
                     continue
 
-                # ----- multi-hot selectors
-                selector = np.zeros(len(matching_atom_map_tuples))
-                all_atom_maps = set(atom_map_tuple_i).union(atom_map_tuple_j)
-                selector[list(all_atom_maps)] = 1
-                self.substruct_pair_selectors.append(selector)
+                self.valid_pairs_substructs.append((i, j))
 
-                # ----- interaction targets
-                interacting = False
-                all_atom_pairs_tuples = nested2d_generator(
-                    atom_map_tuple_i, atom_map_tuple_j
-                )
+    def sample_selector_and_target(self):
+        """
+        Sample random substructure piar. Get multihot selector and target for this pair.
 
-                for atom_map_i, atom_map_j in all_atom_pairs_tuples:
+        Returns:
+            selector: multi hot selector for this pair.
+            int(interacting): 1 or 0 if the pair is interacting.
+        """
 
-                    lhs_id_i = lhs_map_to_id_dicts[atom_map_i]
-                    lhs_id_j = lhs_map_to_id_dicts[atom_map_j]
-                    try:
-                        rhs_id_i = rhs_map_to_id_dicts[atom_map_i]
-                        rhs_id_j = rhs_map_to_id_dicts[atom_map_j]
-                    except KeyError:
-                        continue # atom_map does not exist on RHS
+        random_pair_idx = random.randint(0, self.valid_pairs_substructs)
+        i, j = self.valid_pairs_substructs[random_pair_idx]
 
-                    bond_lhs = lhs_mol.GetBondBetweenAtoms(lhs_id_i, lhs_id_j)
+        atom_map_tuple_i = self.substruct_matches['matches'][i]
+        atom_map_tuple_j = self.substruct_matches['matches'][j]
 
-                    if bond_lhs: # bond already exists on LHS
-                        continue # hence, bond_rhs does not indicate interaction
+        # ----- multi-hot selectors
+        selector = np.zeros(len(self.substruct_matches['matches']))
+        all_atom_maps = set(atom_map_tuple_i).union(atom_map_tuple_j)
+        selector[list(all_atom_maps)] = 1
 
-                    bond_rhs = rhs_mol.GetBondBetweenAtoms(rhs_id_i, rhs_id_j)
-                    if bond_rhs:
-                        interacting = True
-                        break
+        # ----- interaction targets
+        interacting = False
+        all_atom_pairs_tuples = nested2d_generator(
+            atom_map_tuple_i, atom_map_tuple_j
+        )
 
-                if interacting:
-                    self.substruct_pair_targets.append(1)
-                else:
-                    self.substruct_pair_targets.append(0)
+        for atom_map_i, atom_map_j in all_atom_pairs_tuples:
 
-                # ----- recon bonds for this substructure pair
-                self.substruct_pair_recon_bonds.append(
-                    recon_bonds_per_match[i].intersection(recon_bonds_per_match[j])
-                )
+            lhs_id_i = self.map_to_id_dicts['lhs'][atom_map_i]
+            lhs_id_j = self.map_to_id_dicts['lhs'][atom_map_j]
+            try:
+                rhs_id_i = self.map_to_id_dicts['rhs'][atom_map_i]
+                rhs_id_j = self.map_to_id_dicts['rhs'][atom_map_j]
+            except KeyError:
+                continue # atom_map does not exist on RHS
+
+            bond_lhs = self.lhs_mol.GetBondBetweenAtoms(lhs_id_i, lhs_id_j)
+
+            if bond_lhs: # bond already exists on LHS
+                continue # hence, bond_rhs does not indicate interaction
+
+            bond_rhs = self.rhs_mol.GetBondBetweenAtoms(rhs_id_i, rhs_id_j)
+            if bond_rhs:
+                interacting = True
+                break
+
+        return selector, int(interacting)
 
 
 class reaction_record_dataset(Dataset):
@@ -119,7 +109,6 @@ class reaction_record_dataset(Dataset):
         dataset_filepath,
         SUBSTRUCTURE_KEYS,
         mode='train',
-        SAVE_EVERY=10000,
         transform = None,
         pre_transform = None,
         pre_filter = None,
@@ -134,7 +123,6 @@ class reaction_record_dataset(Dataset):
         ) # None to skip downloading (see FAQ)
 
         self.mode = mode
-        self.SAVE_EVERY = SAVE_EVERY
         self.SUBSTRUCTURE_KEYS = SUBSTRUCTURE_KEYS
         self.dataset_filepath = dataset_filepath
         self.processed_mode_dir = os.path.join(PROCESSED_DATASET_LOC, self.mode)
@@ -143,6 +131,7 @@ class reaction_record_dataset(Dataset):
         self.process_reactions()
 
     def process_reactions(self):
+        """Process each reaction in the dataset."""
 
         if not os.path.exists(self.processed_mode_dir):
             os.makedirs(self.processed_mode_dir)
@@ -153,6 +142,9 @@ class reaction_record_dataset(Dataset):
             for rxn_num, reaction_smiles in enumerate(tqdm(
                 train_dataset, desc = f"Preparing {self.mode} reactions", total = num_rxns
             )):
+
+                if rxn_num == 100:
+                    return #! REMOVE LATER
 
                 proccessed_filepath = os.path.join(self.processed_mode_dir, f'rxn_{rxn_num}.pt')
                 if os.path.exists(proccessed_filepath):
@@ -171,11 +163,15 @@ class reaction_record_dataset(Dataset):
                 self.processed_filepaths.append(proccessed_filepath)
 
     def len(self):
+        """Get length of reaction dataset."""
         return len(self.processed_filepaths)
 
     def get(self, idx):
-        # TODO: get a substructure pair target also (return tuple)
+        """Get data point for given reaction-idx."""
         processed_filepath = self.processed_filepaths[idx]
-        reaction_data = torch.load(processed_filepath)
-        return reaction_data.pyg_data
+        reaction_data = torch.load(processed_filepath) # load graph
 
+        # load substruct-pair and target
+        selector, target = reaction_data.sample_selector_and_target()
+
+        return reaction_data.pyg_data, selector, target

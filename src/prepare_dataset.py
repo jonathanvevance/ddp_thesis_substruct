@@ -7,21 +7,20 @@ from data.dataset import reaction_record_dataset
 
 RAW_DATASET_PATH = 'data/raw/'
 SUBSTRUCTURE_KEYS = 'MACCS_FULL'
-SAVE_EVERY = 10000 # how often to save reactions (to continue running later)
 
 def prep_dataset():
     """Prepare datasets."""
 
     train_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'train.txt')
-    train_dataset = reaction_record_dataset(train_dataset_filepath, SUBSTRUCTURE_KEYS, 'train', SAVE_EVERY)
+    train_dataset = reaction_record_dataset(train_dataset_filepath, SUBSTRUCTURE_KEYS, 'train') # Disk space required = 150GB approx
     DataLoader(train_dataset)
 
     test_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'test.txt')
-    test_dataset = reaction_record_dataset(test_dataset_filepath, SUBSTRUCTURE_KEYS, 'test', SAVE_EVERY)
+    test_dataset = reaction_record_dataset(test_dataset_filepath, SUBSTRUCTURE_KEYS, 'test')  # Disk space required = 15GB approx
     DataLoader(test_dataset)
 
     val_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'valid.txt')
-    val_dataset = reaction_record_dataset(val_dataset_filepath, SUBSTRUCTURE_KEYS, 'val', SAVE_EVERY)
+    val_dataset = reaction_record_dataset(val_dataset_filepath, SUBSTRUCTURE_KEYS, 'val') # Disk space required = 12GB approx
     DataLoader(val_dataset)
 
 
