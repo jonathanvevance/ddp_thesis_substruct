@@ -25,7 +25,7 @@ def get_pyg_graph_requirements(mol):
         formal_charge = atom.GetFormalCharge()
         x[atom_idx] = [atomic_num, formal_charge]
 
-    for bond_idx, bond in mol.GetBonds():
+    for bond_idx, bond in enumerate(mol.GetBonds()):
         atom_begin = mol.GetAtomWithIdx(bond.GetBeginAtomIdx())
         atom_end = mol.GetAtomWithIdx(bond.GetEndAtomIdx())
         edge_index[0][bond_idx] = atom_begin.GetAtomMapNum() - 1

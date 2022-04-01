@@ -48,7 +48,11 @@ def get_substruct_matches(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
                 atom_map_1 = atom_id_to_atom_map(atom_id_1)
                 atom_map_2 = atom_id_to_atom_map(atom_id_2)
                 bond_type = mol.GetBondBetweenAtoms(atom_id_1, atom_id_2).GetBondType()
-                bonds_for_recon_this_match.append((atom_map_1, atom_map_2, bond_type)) #! BUG: SORT
+                if atom_map_1 < atom_map_2:
+                    bonds_for_recon_this_match.add((atom_map_1, atom_map_2, bond_type))
+                else:
+                    bonds_for_recon_this_match.add((atom_map_2, atom_map_1, bond_type))
+
 
             atom_map_tuple = tuple(map(atom_id_to_atom_map, match_tuple))
             matching_atom_map_tuples.append(atom_map_tuple)

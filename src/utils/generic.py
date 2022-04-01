@@ -2,6 +2,6 @@
 
 def nested2d_generator(list_A, list_B):
      """Product a stream of 2D coordinates."""
-     for a in range(list_A):
-        for b in range(list_B):
+     for a in list_A:
+        for b in list_B:
             yield a, b

@@ -61,14 +61,15 @@ class reaction_record:
         for i in range(len(matching_atom_map_tuples)):
             for j in range(i + 1, len(matching_atom_map_tuples)):
 
+                atom_map_tuple_i = matching_atom_map_tuples[i]
+                atom_map_tuple_j = matching_atom_map_tuples[j]
+
                 # if any common atom, ignore this substructure pair
                 if len(set(atom_map_tuple_i).intersection(atom_map_tuple_j)):
                     continue
 
                 # ----- multi-hot selectors
                 selector = np.zeros(len(matching_atom_map_tuples))
-                atom_map_tuple_i = matching_atom_map_tuples[i]
-                atom_map_tuple_j = matching_atom_map_tuples[j]
                 all_atom_maps = set(atom_map_tuple_i).union(atom_map_tuple_j)
                 selector[list(all_atom_maps)] = 1
                 self.substruct_pair_selectors.append(selector)
@@ -106,8 +107,8 @@ class reaction_record:
 
                 # ----- recon bonds for this substructure pair
                 self.substruct_pair_recon_bonds.append(
-                    set(recon_bonds_per_match[i]).intersection(recon_bonds_per_match[j])
-                ) #! BUG: (A, B, double).intersection((B, A, double)) = phi
+                    recon_bonds_per_match[i].intersection(recon_bonds_per_match[j])
+                )
 
 
 class reaction_record_dataset(Dataset):
