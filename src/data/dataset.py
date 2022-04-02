@@ -62,7 +62,7 @@ class reaction_record:
             int(interacting): 1 or 0 if the pair is interacting.
         """
 
-        random_pair_idx = random.randint(0, self.valid_pairs_substructs)
+        random_pair_idx = random.randint(0, len(self.valid_pairs_substructs) - 1)
         i, j = self.valid_pairs_substructs[random_pair_idx]
 
         atom_map_tuple_i = self.substruct_matches['matches'][i]
@@ -125,7 +125,7 @@ class reaction_record_dataset(Dataset):
         self.mode = mode
         self.SUBSTRUCTURE_KEYS = SUBSTRUCTURE_KEYS
         self.dataset_filepath = dataset_filepath
-        self.processed_mode_dir = os.path.join(PROCESSED_DATASET_LOC, self.mode)
+        self.processed_mode_dir = os.path.join(PROCESSED_DATASET_LOC, self.SUBSTRUCTURE_KEYS, self.mode)
         self.processed_filepaths = []
 
         self.process_reactions()
@@ -142,6 +142,8 @@ class reaction_record_dataset(Dataset):
             for rxn_num, reaction_smiles in enumerate(tqdm(
                 train_dataset, desc = f"Preparing {self.mode} reactions", total = num_rxns
             )):
+
+                if rxn_num == 100: return # TODO: remove
 
                 proccessed_filepath = os.path.join(self.processed_mode_dir, f'rxn_{rxn_num}.pt')
                 if os.path.exists(proccessed_filepath):
@@ -171,4 +173,5 @@ class reaction_record_dataset(Dataset):
         # load substruct-pair and target
         selector, target = reaction_data.sample_selector_and_target()
 
-        return reaction_data.pyg_data, selector, target
+        print(len(selector))
+        return reaction_data.pyg_data, torch.tensor(selector), target
