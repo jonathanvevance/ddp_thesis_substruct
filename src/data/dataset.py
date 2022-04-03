@@ -24,7 +24,13 @@ class reaction_record:
         self.rhs_mol = Chem.MolFromSmiles(rhs_smiles)
 
         pyg_requirements = get_pyg_graph_requirements(self.lhs_mol)
-        self.substruct_matches = get_substruct_matches(self.lhs_mol, SUBSTRUCTURE_KEYS)
+        substruct_matches = get_substruct_matches(lhs_smiles, SUBSTRUCTURE_KEYS)
+
+        self.num_atoms = self.lhs_mol.GetNumAtoms()
+        self.matches = substruct_matches['matches']
+        self.bonds = substruct_matches['bonds']
+        self.map_to_molid_dict = substruct_matches['map_to_molid_dict']
+
         self.map_to_id_dicts = {
             'lhs': get_map_to_id_dict(self.lhs_mol),
             'rhs': get_map_to_id_dict(self.rhs_mol),
@@ -37,21 +43,49 @@ class reaction_record:
         )
 
         self.valid_pairs_substructs = []
-        self.save_valid_suibstruct_pairs()
+        self.save_substruct_pairs_and_targets()
 
-    def save_valid_suibstruct_pairs(self):
+    def save_substruct_pairs_and_targets(self):
         """Records valid substructure pairs."""
-        for i in range(len(self.substruct_matches['matches'])):
-            for j in range(i + 1, len(self.substruct_matches['matches'])):
+        for i in range(len(self.matches)):
+            for j in range(i + 1, len(self.matches)):
 
-                atom_map_tuple_i = self.substruct_matches['matches'][i]
-                atom_map_tuple_j = self.substruct_matches['matches'][j]
+                atom_map_tuple_i = self.matches[i]
+                atom_map_tuple_j = self.matches[j]
 
-                # if any common atom, ignore this substructure pair
-                if len(set(atom_map_tuple_i).intersection(atom_map_tuple_j)):
+                molid_i = self.map_to_molid_dict[atom_map_tuple_i[0]]
+                molid_j = self.map_to_molid_dict[atom_map_tuple_j[0]]
+
+                if molid_i == molid_j: # no interaction within same molecule
                     continue
 
-                self.valid_pairs_substructs.append((i, j))
+                # ----- interaction targets
+                interacting = False
+                all_atom_pairs_tuples = nested2d_generator(
+                    atom_map_tuple_i, atom_map_tuple_j
+                )
+
+                for atom_map_i, atom_map_j in all_atom_pairs_tuples:
+
+                    lhs_id_i = self.map_to_id_dicts['lhs'][atom_map_i]
+                    lhs_id_j = self.map_to_id_dicts['lhs'][atom_map_j]
+                    try:
+                        rhs_id_i = self.map_to_id_dicts['rhs'][atom_map_i]
+                        rhs_id_j = self.map_to_id_dicts['rhs'][atom_map_j]
+                    except KeyError:
+                        continue # atom_map does not exist on RHS
+
+                    bond_lhs = self.lhs_mol.GetBondBetweenAtoms(lhs_id_i, lhs_id_j)
+
+                    if bond_lhs: # bond already exists on LHS
+                        continue # hence, bond_rhs does not indicate interaction
+
+                    bond_rhs = self.rhs_mol.GetBondBetweenAtoms(rhs_id_i, rhs_id_j)
+                    if bond_rhs:
+                        interacting = True
+                        break
+
+                self.valid_pairs_substructs.append((i, j, int(interacting)))
 
     def sample_selector_and_target(self):
         """
@@ -63,43 +97,20 @@ class reaction_record:
         """
 
         random_pair_idx = random.randint(0, len(self.valid_pairs_substructs) - 1)
-        i, j = self.valid_pairs_substructs[random_pair_idx]
+        i, j, interacting = self.valid_pairs_substructs[random_pair_idx]
 
-        atom_map_tuple_i = self.substruct_matches['matches'][i]
-        atom_map_tuple_j = self.substruct_matches['matches'][j]
+        atom_idx_list_i = [(atom_map - 1) for atom_map in self.matches[i]]
+        atom_idx_list_j = [(atom_map - 1) for atom_map in self.matches[j]]
 
         # ----- multi-hot selectors
-        selector = np.zeros(len(self.substruct_matches['matches']))
-        all_atom_maps = set(atom_map_tuple_i).union(atom_map_tuple_j)
-        selector[list(all_atom_maps)] = 1
+        # TODO: separate selectors
+        selector_i = np.zeros(self.num_atoms)
+        selector_j = np.zeros(self.num_atoms)
 
-        # ----- interaction targets
-        interacting = False
-        all_atom_pairs_tuples = nested2d_generator(
-            atom_map_tuple_i, atom_map_tuple_j
-        )
+        selector_i[atom_idx_list_i] = 1
+        selector_j[atom_idx_list_j] = 1
 
-        for atom_map_i, atom_map_j in all_atom_pairs_tuples:
-
-            lhs_id_i = self.map_to_id_dicts['lhs'][atom_map_i]
-            lhs_id_j = self.map_to_id_dicts['lhs'][atom_map_j]
-            try:
-                rhs_id_i = self.map_to_id_dicts['rhs'][atom_map_i]
-                rhs_id_j = self.map_to_id_dicts['rhs'][atom_map_j]
-            except KeyError:
-                continue # atom_map does not exist on RHS
-
-            bond_lhs = self.lhs_mol.GetBondBetweenAtoms(lhs_id_i, lhs_id_j)
-
-            if bond_lhs: # bond already exists on LHS
-                continue # hence, bond_rhs does not indicate interaction
-
-            bond_rhs = self.rhs_mol.GetBondBetweenAtoms(rhs_id_i, rhs_id_j)
-            if bond_rhs:
-                interacting = True
-                break
-
-        return selector, int(interacting)
+        return selector_i, selector_j, int(interacting)
 
 
 class reaction_record_dataset(Dataset):
@@ -171,7 +182,16 @@ class reaction_record_dataset(Dataset):
         reaction_data = torch.load(processed_filepath) # load graph
 
         # load substruct-pair and target
-        selector, target = reaction_data.sample_selector_and_target()
+        #! separate selectors, aggreg separately and combine finally
+        selector_i, selector_j, target = reaction_data.sample_selector_and_target()
 
-        print(len(selector))
-        return reaction_data.pyg_data, torch.tensor(selector), target
+        # return reaction_data.pyg_data, torch.tensor(selector_i), torch.tensor(selector_j), target
+        # return reaction_data.pyg_data, torch.zeros(20), torch.zeros(20), target #! this works
+
+        x = torch.tensor([[2,1], [5,6], [3,7], [12,0]], dtype=torch.float)
+        y = torch.tensor([0, 1, 0, 1], dtype=torch.float)
+
+        edge_index = torch.tensor([[0, 2, 1, 0, 3],
+                           [3, 1, 0, 1, 2]], dtype=torch.long)
+
+        return Data(x=x, y=y, edge_index=edge_index), torch.zeros(20), torch.zeros(20), target

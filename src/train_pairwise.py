@@ -3,7 +3,6 @@
 import os
 import torch
 from itertools import chain
-# from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader
 
 from configs import train_pairwise_cfg as cfg
@@ -21,34 +20,40 @@ def train():
     train_loader = DataLoader(train_dataset, batch_size = cfg.BATCH_SIZE, shuffle = True)
 
     # ----- Load models
-    model_mpnn = GCNConv(2, 32) # TODO (+push to device)
-    model_score = GCNConv(2, 32) # TODO (+push to device)
+    model_mpnn = GCNConv(2, 1) # TODO
+    model_scoring = GCNConv(2, 1) # TODO
 
     # ----- Get available device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_mpnn = model_mpnn.to(device)
+    model_scoring = model_scoring.to(device)
 
     # ----- Load training settings
-    all_params = chain(model_mpnn.parameters(), model_score.parameters())
+    all_params = chain(model_mpnn.parameters(), model_scoring.parameters())
     optimizer = torch.optim.Adam(all_params, lr = cfg.LR, weight_decay = cfg.WEIGHT_DECAY)
     criterion = torch.nn.CrossEntropyLoss()
-
 
     for epoch in range(2):
         running_loss = 0.0
         for idx, train_batch in enumerate(train_loader):
 
-            # graph = train_batch.to(device) #! testing
-
-            graph, selector, target = train_batch
-            graph, selector, target = graph.to(device), selector.to(device), target.to(device)
+            # https://pytorch-geometric.readthedocs.io/en/latest/notes/batching.html
+            graph, selector_i, selector_j, target = train_batch
+            graph, target = graph.to(device), target.to(device)
+            selector_i, selector_j = selector_i.to(device), selector_j.to(device)
 
             optimizer.zero_grad()
 
-            atom_features = model_mpnn(graph)
+            atom_features = model_mpnn(graph.x.float(), graph.edge_index)
+
+            print(selector_i.shape)
+            # graph.batch -> gives 'node' maps corresponding to reaction
+            # Note: we have to further apply a selector-map on them.
+
             print('graph step successful')
+
             # selected_atom_features = atom_features.apply(selector) # TODO
-            # interaction_score = model_score(selected_atom_features)
+            # interaction_score = model_scoring(selected_atom_features)
 
             # loss = criterion(interaction_score, target)
             # loss.backward()

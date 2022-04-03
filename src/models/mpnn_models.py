@@ -2,6 +2,7 @@ import torch
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import add_self_loops, degree
 
+# TODO: this is just a layer. Implement a network
 class GCNConv(MessagePassing):
     def __init__(self, in_channels, out_channels):
         super().__init__(aggr='add')  # "Add" aggregation (Step 5).

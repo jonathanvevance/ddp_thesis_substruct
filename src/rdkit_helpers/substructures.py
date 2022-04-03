@@ -4,20 +4,20 @@ from rdkit import Chem
 
 from rdkit_helpers.substructure_keys import patterns_dict
 from rdkit_helpers.generic import get_atom_maps
+from rdkit_helpers.generic import get_map_to_molid_dict
 
-def get_substruct_matches(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
+def get_substruct_matches(smiles, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
     """
     Get tuples of atom indices corresponding to substructure matches.
 
-    Args:
-        mol (RDKit Mol): RDKit Mol object to get substructure matches for
-        SUBSTRUCTURE_KEYS (str, optional):
-            Chemical substructure keys to use. Defaults to 'MACCS_FULL'.
+    Args: # TODO
 
-    Returns:
-        all_atomidx_tuples: List of matching tuples of atom indices
+    Returns: # TODO
     """
 
+    map_to_molid_dict = get_map_to_molid_dict(smiles)
+
+    mol = Chem.MolFromSmiles(smiles)
     patterns = patterns_dict[SUBSTRUCTURE_KEYS]['SMARTS']
     keys_to_skip = patterns_dict[SUBSTRUCTURE_KEYS]['KEYS_TO_SKIP']
     atom_id_to_atom_map = get_atom_maps(mol)
@@ -60,6 +60,7 @@ def get_substruct_matches(mol, SUBSTRUCTURE_KEYS = 'MACCS_FULL'):
 
     substruct_matches = {
         'matches': matching_atom_map_tuples,
-        'bonds': recon_bonds_per_match
+        'bonds': recon_bonds_per_match,
+        'map_to_molid_dict': map_to_molid_dict,
     }
     return substruct_matches
