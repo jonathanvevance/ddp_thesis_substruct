@@ -7,7 +7,8 @@ from torch_geometric.loader import DataLoader
 
 from configs import train_pairwise_cfg as cfg
 from data.dataset import reaction_record_dataset
-from models.mpnn_models import * #!
+from models.mpnn_models import GCNConv
+from models.mlp_models import NeuralNet
 
 RAW_DATASET_PATH = 'data/raw/'
 
@@ -20,8 +21,8 @@ def train():
     train_loader = DataLoader(train_dataset, batch_size = cfg.BATCH_SIZE, shuffle = True)
 
     # ----- Load models
-    model_mpnn = GCNConv(2, 1) # TODO
-    model_scoring = GCNConv(2, 1) # TODO
+    model_mpnn = GCNConv(2, 32) # TODO
+    model_scoring = NeuralNet() # TODO
 
     # ----- Get available device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -36,24 +37,21 @@ def train():
     for epoch in range(2):
         running_loss = 0.0
         for idx, train_batch in enumerate(train_loader):
-
-            # https://pytorch-geometric.readthedocs.io/en/latest/notes/batching.html
-            graph, selector_i, selector_j, target = train_batch
-            graph, target = graph.to(device), target.to(device)
-            selector_i, selector_j = selector_i.to(device), selector_j.to(device)
-
+            train_batch = train_batch.to(device)
             optimizer.zero_grad()
+            atom_mpnn_features = model_mpnn(train_batch.x.float(), train_batch.edge_index)
 
-            atom_features = model_mpnn(graph.x.float(), graph.edge_index)
-
-            print(selector_i.shape)
             # graph.batch -> gives 'node' maps corresponding to reaction
             # Note: we have to further apply a selector-map on them.
 
-            print('graph step successful')
+            atom_mlp_features = model_scoring(atom_mpnn_features)
+            print(atom_mlp_features.shape)
+            print('mlp step successful')
+
+            # select BOTH atoms AND DATA.BATCH --> https://stackoverflow.com/questions/60032073/select-specific-rows-of-2d-pytorch-tensor
 
             # selected_atom_features = atom_features.apply(selector) # TODO
-            # interaction_score = model_scoring(selected_atom_features)
+            # interaction_scores = model_scoring(selected_atom_features)
 
             # loss = criterion(interaction_score, target)
             # loss.backward()

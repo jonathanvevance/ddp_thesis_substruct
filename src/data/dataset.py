@@ -181,17 +181,13 @@ class reaction_record_dataset(Dataset):
         processed_filepath = self.processed_filepaths[idx]
         reaction_data = torch.load(processed_filepath) # load graph
 
-        # load substruct-pair and target
-        #! separate selectors, aggreg separately and combine finally
+        # load substruct-pair selectors and target
         selector_i, selector_j, target = reaction_data.sample_selector_and_target()
 
-        # return reaction_data.pyg_data, torch.tensor(selector_i), torch.tensor(selector_j), target
-        # return reaction_data.pyg_data, torch.zeros(20), torch.zeros(20), target #! this works
+        # attach selectors and target to Data object
+        # https://pytorch-geometric.readthedocs.io/en/latest/notes/batching.html
+        reaction_data.pyg_data.selector_i = torch.tensor(selector_i)
+        reaction_data.pyg_data.selector_j = torch.tensor(selector_j)
+        reaction_data.pyg_data.target = target
 
-        x = torch.tensor([[2,1], [5,6], [3,7], [12,0]], dtype=torch.float)
-        y = torch.tensor([0, 1, 0, 1], dtype=torch.float)
-
-        edge_index = torch.tensor([[0, 2, 1, 0, 3],
-                           [3, 1, 0, 1, 2]], dtype=torch.long)
-
-        return Data(x=x, y=y, edge_index=edge_index), torch.zeros(20), torch.zeros(20), target
+        return reaction_data.pyg_data
