@@ -10,6 +10,7 @@ from configs import train_pairwise_cfg as cfg
 from data.dataset import reaction_record_dataset
 from models.mpnn_models import GCNConv
 from models.mlp_models import NeuralNet
+from models.mlp_models import ScoringNetwork
 from utils.generic import groupby_mean_tensors
 
 RAW_DATASET_PATH = 'data/raw/'
@@ -29,19 +30,22 @@ def train():
 
     # ----- Load models
     model_mpnn = GCNConv(2, 32) # TODO
-    model_scoring = NeuralNet() # TODO
+    model_aggreg = NeuralNet() # TODO
+    model_scoring = ScoringNetwork()
 
     # ----- Get available device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_mpnn = model_mpnn.to(device)
+    model_aggreg = model_aggreg.to(device)
     model_scoring = model_scoring.to(device)
 
     # ----- Load training settings
-    all_params = chain(model_mpnn.parameters(), model_scoring.parameters())
+    all_params = chain(
+        model_mpnn.parameters(), model_aggreg.parameters(), model_scoring.parameters())
     optimizer = torch.optim.Adam(all_params, lr = cfg.LR, weight_decay = cfg.WEIGHT_DECAY)
     criterion = torch.nn.CrossEntropyLoss()
 
-    for epoch in range(2):
+    for epoch in range(200):
         running_loss = 0.0
         for idx, train_batch in enumerate(train_loader):
             train_batch = train_batch.to(device)
@@ -51,7 +55,7 @@ def train():
             # graph.batch -> gives 'node' maps corresponding to reaction
             # Note: we have to further apply a selector-map on them.
 
-            atom_mlp_features = model_scoring(atom_mpnn_features)
+            atom_mlp_features = model_aggreg(atom_mpnn_features)
             select_atoms_batch_i = torch.nonzero(train_batch.selector_i, as_tuple=True)
             selected_atom_features_i = atom_mlp_features[select_atoms_batch_i]
             rxn_indices_i = train_batch.batch[select_atoms_batch_i]
@@ -70,27 +74,22 @@ def train():
                 selected_atom_features_j, rxn_indices_j
             )
 
-            # pass tuple into scoring mlp
+            scores = model_scoring(substruct_features_i, substruct_features_j)
+            loss = criterion(scores, train_batch.target.unsqueeze(1).float())
+            #! THERE IS A BUG WITH LOSS --> CHECK PROPER DEMO USAGE
 
+            print(scores)
+            print(train_batch.target.unsqueeze(1).float())
 
+            loss.backward()
+            optimizer.step()
 
-            print('mlp step successful')
-            print('\n\n\n')
-
-            # select BOTH atoms AND DATA.BATCH --> https://stackoverflow.com/questions/60032073/select-specific-rows-of-2d-pytorch-tensor
-
-            # selected_atom_features = atom_features.apply(selector) # TODO
-            # interaction_scores = model_scoring(selected_atom_features)
-
-            # loss = criterion(interaction_score, target)
-            # loss.backward()
-            # optimizer.step()
-
-            # # print statistics
-            # running_loss += loss.item()
+            # print statistics
+            running_loss += loss.item()
             # if idx % 2000 == 1999:    # print every 2000 mini-batches
-            #     print(f'[{epoch + 1}, {idx + 1:5d}] loss: {running_loss / 2000:.3f}')
-            #     running_loss = 0.0
+            if idx % 2 == 1:    # print every 2000 mini-batches
+                print(f'[{epoch + 1}, {idx + 1:5d}] loss: {running_loss}')
+                # running_loss = 0.0
 
     print('Finished Training')
 
