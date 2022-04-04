@@ -4,11 +4,13 @@ import os
 import torch
 from itertools import chain
 from torch_geometric.loader import DataLoader
+# TODO: Look at torch_geometric.data.LightningDataset for multi-GPU training
 
 from configs import train_pairwise_cfg as cfg
 from data.dataset import reaction_record_dataset
 from models.mpnn_models import GCNConv
 from models.mlp_models import NeuralNet
+from utils.generic import groupby_mean_tensors
 
 RAW_DATASET_PATH = 'data/raw/'
 
@@ -17,7 +19,12 @@ def train():
 
     # ----- Load dataset, dataloader
     train_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'train.txt')
-    train_dataset = reaction_record_dataset(train_dataset_filepath, cfg.SUBSTRUCTURE_KEYS, 'train')
+    train_dataset = reaction_record_dataset(
+        dataset_filepath = train_dataset_filepath,
+        SUBSTRUCTURE_KEYS = cfg.SUBSTRUCTURE_KEYS,
+        mode = 'train',
+        sample_pos_fraction = cfg.SAMPLE_POS_FRACTION,
+    )
     train_loader = DataLoader(train_dataset, batch_size = cfg.BATCH_SIZE, shuffle = True)
 
     # ----- Load models
@@ -45,8 +52,30 @@ def train():
             # Note: we have to further apply a selector-map on them.
 
             atom_mlp_features = model_scoring(atom_mpnn_features)
-            print(atom_mlp_features.shape)
+            select_atoms_batch_i = torch.nonzero(train_batch.selector_i, as_tuple=True)
+            selected_atom_features_i = atom_mlp_features[select_atoms_batch_i]
+            rxn_indices_i = train_batch.batch[select_atoms_batch_i]
+
+            select_atoms_batch_j = torch.nonzero(train_batch.selector_j, as_tuple=True)
+            selected_atom_features_j = atom_mlp_features[select_atoms_batch_j]
+            rxn_indices_j = train_batch.batch[select_atoms_batch_j]
+
+            assert len(selected_atom_features_i) == len(rxn_indices_i) # True
+            assert len(selected_atom_features_j) == len(rxn_indices_j) # True
+
+            substruct_features_i = groupby_mean_tensors(
+                selected_atom_features_i, rxn_indices_i
+            )
+            substruct_features_j = groupby_mean_tensors(
+                selected_atom_features_j, rxn_indices_j
+            )
+
+            # pass tuple into scoring mlp
+
+
+
             print('mlp step successful')
+            print('\n\n\n')
 
             # select BOTH atoms AND DATA.BATCH --> https://stackoverflow.com/questions/60032073/select-specific-rows-of-2d-pytorch-tensor
 

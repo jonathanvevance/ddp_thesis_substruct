@@ -42,7 +42,8 @@ class reaction_record:
             edge_attr = torch.tensor(pyg_requirements['edge_attr']),
         )
 
-        self.valid_pairs_substructs = []
+        self.pos_substructs_and_tgts = []
+        self.neg_substructs_and_tgts = []
         self.save_substruct_pairs_and_targets()
 
     def save_substruct_pairs_and_targets(self):
@@ -85,9 +86,12 @@ class reaction_record:
                         interacting = True
                         break
 
-                self.valid_pairs_substructs.append((i, j, int(interacting)))
+                if interacting:
+                    self.pos_substructs_and_tgts.append((i, j, int(interacting)))
+                else:
+                    self.neg_substructs_and_tgts.append((i, j, int(interacting)))
 
-    def sample_selector_and_target(self):
+    def sample_selector_and_target(self, sample_pos_fraction):
         """
         Sample random substructure piar. Get multihot selector and target for this pair.
 
@@ -96,14 +100,22 @@ class reaction_record:
             int(interacting): 1 or 0 if the pair is interacting.
         """
 
-        random_pair_idx = random.randint(0, len(self.valid_pairs_substructs) - 1)
-        i, j, interacting = self.valid_pairs_substructs[random_pair_idx]
+        if random.uniform(0, 1) < sample_pos_fraction:
+            try:
+                pos_pair_idx = random.randint(0, len(self.pos_substructs_and_tgts) - 1)
+                i, j, interacting = self.pos_substructs_and_tgts[pos_pair_idx]
+            except: # TODO: remove after getting full dataset
+                neg_pair_idx = random.randint(0, len(self.neg_substructs_and_tgts) - 1)
+                i, j, interacting = self.neg_substructs_and_tgts[neg_pair_idx]
+        else:
+            neg_pair_idx = random.randint(0, len(self.neg_substructs_and_tgts) - 1)
+            i, j, interacting = self.neg_substructs_and_tgts[neg_pair_idx]
 
-        atom_idx_list_i = [(atom_map - 1) for atom_map in self.matches[i]]
-        atom_idx_list_j = [(atom_map - 1) for atom_map in self.matches[j]]
+
+        atom_idx_list_i = sorted([(atom_map - 1) for atom_map in self.matches[i]])
+        atom_idx_list_j = sorted([(atom_map - 1) for atom_map in self.matches[j]])
 
         # ----- multi-hot selectors
-        # TODO: separate selectors
         selector_i = np.zeros(self.num_atoms)
         selector_j = np.zeros(self.num_atoms)
 
@@ -120,6 +132,7 @@ class reaction_record_dataset(Dataset):
         dataset_filepath,
         SUBSTRUCTURE_KEYS,
         mode='train',
+        sample_pos_fraction = 0.5,
         transform = None,
         pre_transform = None,
         pre_filter = None,
@@ -134,8 +147,9 @@ class reaction_record_dataset(Dataset):
         ) # None to skip downloading (see FAQ)
 
         self.mode = mode
-        self.SUBSTRUCTURE_KEYS = SUBSTRUCTURE_KEYS
         self.dataset_filepath = dataset_filepath
+        self.SUBSTRUCTURE_KEYS = SUBSTRUCTURE_KEYS
+        self.sample_pos_fraction = sample_pos_fraction
         self.processed_mode_dir = os.path.join(PROCESSED_DATASET_LOC, self.SUBSTRUCTURE_KEYS, self.mode)
         self.processed_filepaths = []
 
@@ -182,7 +196,8 @@ class reaction_record_dataset(Dataset):
         reaction_data = torch.load(processed_filepath) # load graph
 
         # load substruct-pair selectors and target
-        selector_i, selector_j, target = reaction_data.sample_selector_and_target()
+        selector_i, selector_j, target = \
+            reaction_data.sample_selector_and_target(self.sample_pos_fraction)
 
         # attach selectors and target to Data object
         # https://pytorch-geometric.readthedocs.io/en/latest/notes/batching.html
@@ -190,4 +205,6 @@ class reaction_record_dataset(Dataset):
         reaction_data.pyg_data.selector_j = torch.tensor(selector_j)
         reaction_data.pyg_data.target = target
 
+        #! PROBLEM = when we batch 'select_atoms_i', we want
+        #! CUMULATIVE select indices (requires num_atoms information also)
         return reaction_data.pyg_data
