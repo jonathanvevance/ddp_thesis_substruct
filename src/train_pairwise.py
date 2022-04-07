@@ -18,6 +18,15 @@ RAW_DATASET_PATH = 'data/raw/'
 
 
 def train():
+    """
+    Train the neural network for pairwise-interaction matrix prediction stage.
+
+    Implementation notes:
+        pytorch-geometric batches graphs (datapoints) in the batch into a
+        single large graph. Attributes attached to torch_geometric.data.Data
+        objects are also batched in a specific way. I have taken advantage of
+        this to attach the required attributes to Data objects.
+    """
 
     # ----- Load dataset, dataloader
     train_dataset_filepath = os.path.join(RAW_DATASET_PATH, 'train.txt')
@@ -51,23 +60,34 @@ def train():
         for idx, train_batch in enumerate(train_loader):
             train_batch = train_batch.to(device)
             optimizer.zero_grad()
+
+            ## STEP 1: Standard Message passing operation on the graph
+            # train_batch.x = 'BATCH' graph and train_batch.edge_matrix = 'BATCH' edge matrix
             atom_mpnn_features = model_mpnn(train_batch.x.float(), train_batch.edge_index)
 
-            # graph.batch -> gives 'node' maps corresponding to reaction
-            # Note: we have to further apply a selector-map on them.
-
+            ## STEP 2: Forward pass on atom features using a feedforward network
             atom_mlp_features = model_aggreg(atom_mpnn_features)
+
+            ## STEP 3: Select atoms involved in the sampled substructure-pairs
+            # select atoms (from all reactions in the batch), involved in the first
+            # substructure of the randomly sampled substructure pairs.
             select_atoms_batch_i = torch.nonzero(train_batch.selector_i, as_tuple=True)
             selected_atom_features_i = atom_mlp_features[select_atoms_batch_i]
             rxn_indices_i = train_batch.batch[select_atoms_batch_i]
 
+            # select atoms (from all reactions in the batch), involved in the second
+            # substructure of the randomly sampled substructure pairs.
             select_atoms_batch_j = torch.nonzero(train_batch.selector_j, as_tuple=True)
             selected_atom_features_j = atom_mlp_features[select_atoms_batch_j]
             rxn_indices_j = train_batch.batch[select_atoms_batch_j]
 
+            # Note: train_batch.batch contains atom labels that gives us the information on
+            # how to separate the different reactions in the train_batch.
+
             assert len(selected_atom_features_i) == len(rxn_indices_i) # True
             assert len(selected_atom_features_j) == len(rxn_indices_j) # True
 
+            ## STEP 4: Mean-aggregate atom features into substructure features
             substruct_features_i = groupby_mean_tensors(
                 selected_atom_features_i, rxn_indices_i
             )
@@ -75,6 +95,7 @@ def train():
                 selected_atom_features_j, rxn_indices_j
             )
 
+            ## STEP 5: Produce interaction score using substructure-features-pair
             scores = model_scoring(substruct_features_i, substruct_features_j)
             loss = criterion(scores, train_batch.target)
 

@@ -126,7 +126,21 @@ class reaction_record:
 
 
 class reaction_record_dataset(Dataset):
-    """Class to hold all reaction information."""
+    """
+    Class to hold all reaction information.
+
+    Implementation notes:
+        1.  The get(idx) call samples the reaction given by idx. The information
+            required for training is not just the reaction graph but also a
+            substructure-pair and the corresponding interaction score.
+
+        2.  So a random substructure-pair is sampled from the 'idx' reaction.
+            Corresponding atom-selectors are attached to the 'Data' object (takes
+            advantage of torch_geometric.loader.DataLoader batching strategy).
+
+        3.  Hence a single training step on a reaction ONLY trains ONE of the
+            possible substructure-pairs.
+    """
     def __init__(
         self,
         dataset_filepath,
