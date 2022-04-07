@@ -1,6 +1,7 @@
 """Python file to train pairwise interaction scores model."""
 
 import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 import torch
 from itertools import chain
 from torch_geometric.loader import DataLoader
@@ -45,7 +46,7 @@ def train():
     optimizer = torch.optim.Adam(all_params, lr = cfg.LR, weight_decay = cfg.WEIGHT_DECAY)
     criterion = torch.nn.CrossEntropyLoss()
 
-    for epoch in range(200):
+    for epoch in range(cfg.EPOCHS):
         running_loss = 0.0
         for idx, train_batch in enumerate(train_loader):
             train_batch = train_batch.to(device)
@@ -75,11 +76,7 @@ def train():
             )
 
             scores = model_scoring(substruct_features_i, substruct_features_j)
-            loss = criterion(scores, train_batch.target.unsqueeze(1).float())
-            #! THERE IS A BUG WITH LOSS --> CHECK PROPER DEMO USAGE
-
-            print(scores)
-            print(train_batch.target.unsqueeze(1).float())
+            loss = criterion(scores, train_batch.target)
 
             loss.backward()
             optimizer.step()

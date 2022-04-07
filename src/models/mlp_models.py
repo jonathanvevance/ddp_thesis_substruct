@@ -3,8 +3,6 @@
 import torch
 import torch.nn as nn
 
-# TODO: research common (graph or just vector) aggregation strategies
-# TODO: Ex. like there exists for attention mechanism
 class NeuralNet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -26,7 +24,7 @@ class ScoringNetwork(nn.Module):
         self.layers = nn.ModuleList([
             nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(64, 1),
+            nn.Linear(64, 2),
             nn.ReLU(),
         ])
 
@@ -38,4 +36,7 @@ class ScoringNetwork(nn.Module):
         for layer in self.layers:
             x2 = layer(x2)
 
-        return torch.sigmoid(0.5 * (x1 + x2))
+        return torch.softmax(0.5 * (x1 + x2), dim = 1)
+
+# TODO: research common (graph or just vector) aggregation strategies
+# TODO: Ex. like there exists for attention mechanism
