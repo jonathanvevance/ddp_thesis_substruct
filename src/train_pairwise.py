@@ -111,14 +111,6 @@ def train():
 
     print('Finished Training')
 
-# load model
-
-# load train settings
-
-# train model
-
-# save results
-
 
 if __name__ == '__main__':
     train()
