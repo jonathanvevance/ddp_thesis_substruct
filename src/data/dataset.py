@@ -219,6 +219,4 @@ class reaction_record_dataset(Dataset):
         reaction_data.pyg_data.selector_j = torch.tensor(selector_j)
         reaction_data.pyg_data.target = target
 
-        #! PROBLEM = when we batch 'select_atoms_i', we want
-        #! CUMULATIVE select indices (requires num_atoms information also)
         return reaction_data.pyg_data
