@@ -1,37 +1,42 @@
 """Python file with MPNN model classes."""
 
 import torch
-from torch_geometric.nn import MessagePassing
-from torch_geometric.utils import add_self_loops, degree
+import torch.nn.functional as F
+from torch_geometric.nn import GCNConv, GATv2Conv
 
-# TODO: this is just a layer. Implement a network
-class GCNConv(MessagePassing):
-    def __init__(self, in_channels, out_channels):
-        super().__init__(aggr='add')  # "Add" aggregation (Step 5).
-        self.lin = torch.nn.Linear(in_channels, out_channels)
+# https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html
+class GCN_2layer(torch.nn.Module):
+    def __init__(self, in_features, out_features, mode = 'train'):
+        super().__init__()
+        self.mode = mode
+        self.conv1 = GCNConv(in_features, 16)
+        self.conv2 = GCNConv(16, out_features)
 
     def forward(self, x, edge_index):
-        # x has shape [N, in_channels]
-        # edge_index has shape [2, E]
 
-        # Step 1: Add self-loops to the adjacency matrix.
-        edge_index, _ = add_self_loops(edge_index, num_nodes=x.size(0))
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, training = (self.mode == 'train'))
+        x = self.conv2(x, edge_index)
 
-        # Step 2: Linearly transform node feature matrix.
-        x = self.lin(x)
+        return F.relu(x)
 
-        # Step 3: Compute normalization.
-        row, col = edge_index
-        deg = degree(col, x.size(0), dtype=x.dtype)
-        deg_inv_sqrt = deg.pow(-0.5)
-        deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
-        norm = deg_inv_sqrt[row] * deg_inv_sqrt[col]
 
-        # Step 4-5: Start propagating messages.
-        return self.propagate(edge_index, x=x, norm=norm)
+class GAT_2layer(torch.nn.Module):
+    def __init__(self, in_features, out_features, mode = 'train'):
+        super().__init__()
+        in_head, out_head = 8, 1
+        self.mode = mode
+        self.conv1 = GATv2Conv(in_features, 16, heads = in_head, dropout = 0.6)
+        self.conv2 = GATv2Conv(
+            16 * in_head, out_features, concat = False, heads = out_head, dropout = 0.6)
 
-    def message(self, x_j, norm):
-        # x_j has shape [E, out_channels]
+    def forward(self, x, edge_index):
 
-        # Step 4: Normalize node features.
-        return norm.view(-1, 1) * x_j
+        x = F.dropout(x, p=0.6, training = (self.mode == 'train'))
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p = 0.5, training = (self.mode == 'train'))
+        x = self.conv2(x, edge_index)
+
+        return F.relu(x)

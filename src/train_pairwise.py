@@ -9,7 +9,7 @@ from torch_geometric.loader import DataLoader
 
 from configs import train_pairwise_cfg as cfg
 from data.dataset import reaction_record_dataset
-from models.mpnn_models import GCNConv
+from models.mpnn_models import GCN_2layer
 from models.mlp_models import NeuralNet
 from models.mlp_models import ScoringNetwork
 from utils.generic import groupby_mean_tensors
@@ -39,7 +39,7 @@ def train():
     train_loader = DataLoader(train_dataset, batch_size = cfg.BATCH_SIZE, shuffle = True)
 
     # ----- Load models
-    model_mpnn = GCNConv(2, 32) # TODO
+    model_mpnn = GCN_2layer(2, 32, 'train') # TODO
     model_aggreg = NeuralNet() # TODO
     model_scoring = ScoringNetwork()
 
