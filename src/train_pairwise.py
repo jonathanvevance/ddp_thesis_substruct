@@ -10,6 +10,7 @@ from torch_geometric.loader import DataLoader
 from configs import train_pairwise_cfg as cfg
 from data.dataset import reaction_record_dataset
 from models.mpnn_models import GCN_2layer
+from models.mpnn_models import GAT_2layer
 from models.mlp_models import NeuralNet
 from models.mlp_models import ScoringNetwork
 from utils.generic import groupby_mean_tensors
@@ -39,7 +40,8 @@ def train():
     train_loader = DataLoader(train_dataset, batch_size = cfg.BATCH_SIZE, shuffle = True)
 
     # ----- Load models
-    model_mpnn = GCN_2layer(2, 32, 'train') # TODO
+    # model_mpnn = GAT_2layer(2, 32, 'train')
+    model_mpnn = GCN_2layer(2, 32, 'train')
     model_aggreg = NeuralNet() # TODO
     model_scoring = ScoringNetwork()
 
@@ -50,10 +52,11 @@ def train():
     model_scoring = model_scoring.to(device)
 
     # ----- Load training settings
+    # TODO: give just one network as params
     all_params = chain(
         model_mpnn.parameters(), model_aggreg.parameters(), model_scoring.parameters())
     optimizer = torch.optim.Adam(all_params, lr = cfg.LR, weight_decay = cfg.WEIGHT_DECAY)
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCELoss()
 
     for epoch in range(cfg.EPOCHS):
         running_loss = 0.0
@@ -63,7 +66,9 @@ def train():
 
             ## STEP 1: Standard Message passing operation on the graph
             # train_batch.x = 'BATCH' graph and train_batch.edge_matrix = 'BATCH' edge matrix
-            atom_mpnn_features = model_mpnn(train_batch.x.float(), train_batch.edge_index)
+            atom_mpnn_features = model_mpnn(
+                train_batch.x.float(), train_batch.edge_index, train_batch.edge_attr.float()
+            )
 
             ## STEP 2: Forward pass on atom features using a feedforward network
             atom_mlp_features = model_aggreg(atom_mpnn_features)
@@ -97,7 +102,7 @@ def train():
 
             ## STEP 5: Produce interaction score using substructure-features-pair
             scores = model_scoring(substruct_features_i, substruct_features_j)
-            loss = criterion(scores, train_batch.target)
+            loss = criterion(scores, train_batch.target.unsqueeze(1).float())
 
             loss.backward()
             optimizer.step()

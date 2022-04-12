@@ -1,8 +1,5 @@
 """Python file with atom features utilities."""
 
-import numpy as np
-from rdkit import Chem
-
 def get_pyg_graph_requirements(mol):
 
     num_atom_features = 2

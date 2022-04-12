@@ -21,22 +21,24 @@ class NeuralNet(nn.Module):
 class ScoringNetwork(nn.Module):
     def __init__(self):
         super().__init__()
-        self.layers = nn.ModuleList([
+        self.shared_layers = nn.ModuleList([
             nn.Linear(64, 64),
             nn.ReLU(),
-            nn.Linear(64, 2),
+            nn.Linear(64, 64),
             nn.ReLU(),
         ])
+        self.concat_mlp = nn.Linear(128, 1)
 
     def forward(self, x1, x2):
 
-        for layer in self.layers:
+        for layer in self.shared_layers:
             x1 = layer(x1)
 
-        for layer in self.layers:
+        for layer in self.shared_layers:
             x2 = layer(x2)
 
-        return torch.softmax(0.5 * (x1 + x2), dim = 1)
+        x = torch.cat((x1, x2), dim = 1)
+        return torch.sigmoid(self.concat_mlp(x))
 
 # TODO: research common (graph or just vector) aggregation strategies
 # TODO: Ex. like there exists for attention mechanism
