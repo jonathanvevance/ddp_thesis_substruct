@@ -182,7 +182,7 @@ class reaction_record_dataset(Dataset):
                 train_dataset, desc = f"Preparing {self.mode} reactions", total = num_rxns
             )):
 
-                if rxn_num == 100: return # TODO: remove
+                if rxn_num == 50000: return # TODO: remove
 
                 proccessed_filepath = os.path.join(self.processed_mode_dir, f'rxn_{rxn_num}.pt')
                 if os.path.exists(proccessed_filepath):
