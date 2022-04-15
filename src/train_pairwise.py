@@ -109,10 +109,9 @@ def train():
 
             # print statistics
             running_loss += loss.item()
-            # if idx % 2000 == 1999:    # print every 2000 mini-batches
-            if idx % 2 == 1:    # print every 2000 mini-batches
+            if idx % 500 == 499:    # print every 500 mini-batches
                 print(f'[{epoch + 1}, {idx + 1:5d}] loss: {running_loss}')
-                # running_loss = 0.0
+                running_loss = 0.0
 
     print('Finished Training')
 
