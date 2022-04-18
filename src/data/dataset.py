@@ -16,6 +16,9 @@ from rdkit_helpers.features import get_pyg_graph_requirements
 
 PROCESSED_DATASET_LOC = 'data/processed/'
 
+def reaction_filter(reaction):
+    return reaction.is_valid()
+
 class reaction_record:
     def __init__(self, reaction_smiles, SUBSTRUCTURE_KEYS):
 
@@ -91,6 +94,11 @@ class reaction_record:
                 else:
                     self.neg_substructs_and_tgts.append((i, j, int(interacting)))
 
+    def is_valid(self):
+        if len(self.pos_substructs_and_tgts) == 0 or len(self.neg_substructs_and_tgts) == 0:
+            return False
+        return True
+
     def sample_selector_and_target(self, sample_pos_fraction):
         """
         Sample random substructure piar. Get multihot selector and target for this pair.
@@ -100,17 +108,16 @@ class reaction_record:
             int(interacting): 1 or 0 if the pair is interacting.
         """
 
-        if random.uniform(0, 1) < sample_pos_fraction:
-            try:
+        try:
+            if random.uniform(0, 1) < sample_pos_fraction:
                 pos_pair_idx = random.randint(0, len(self.pos_substructs_and_tgts) - 1)
                 i, j, interacting = self.pos_substructs_and_tgts[pos_pair_idx]
-            except: # TODO: remove after getting full dataset
+            else:
                 neg_pair_idx = random.randint(0, len(self.neg_substructs_and_tgts) - 1)
                 i, j, interacting = self.neg_substructs_and_tgts[neg_pair_idx]
-        else:
-            neg_pair_idx = random.randint(0, len(self.neg_substructs_and_tgts) - 1)
-            i, j, interacting = self.neg_substructs_and_tgts[neg_pair_idx]
-
+        except:
+            print(len(self.pos_substructs_and_tgts))
+            print(len(self.neg_substructs_and_tgts))
 
         atom_idx_list_i = sorted([(atom_map - 1) for atom_map in self.matches[i]])
         atom_idx_list_j = sorted([(atom_map - 1) for atom_map in self.matches[j]])
@@ -149,7 +156,7 @@ class reaction_record_dataset(Dataset):
         sample_pos_fraction = 0.5,
         transform = None,
         pre_transform = None,
-        pre_filter = None,
+        pre_filter = reaction_filter,
     ):
 
         # https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html
@@ -175,6 +182,12 @@ class reaction_record_dataset(Dataset):
         if not os.path.exists(self.processed_mode_dir):
             os.makedirs(self.processed_mode_dir)
 
+        reaction_files = os.listdir(self.processed_mode_dir)
+        if len(reaction_files):
+            start_from = max(int(reaction_file[4:-3]) for reaction_file in reaction_files)
+        else:
+            start_from = -1
+
         num_rxns = sum(1 for line in open(self.dataset_filepath, "r"))
 
         with open(self.dataset_filepath, "r") as train_dataset:
@@ -184,9 +197,10 @@ class reaction_record_dataset(Dataset):
 
                 if rxn_num == 50000: return # TODO: remove
 
-                proccessed_filepath = os.path.join(self.processed_mode_dir, f'rxn_{rxn_num}.pt')
-                if os.path.exists(proccessed_filepath):
-                    self.processed_filepaths.append(proccessed_filepath)
+                processed_filepath = os.path.join(self.processed_mode_dir, f'rxn_{rxn_num}.pt')
+                if rxn_num < start_from + 1:
+                    if os.path.exists(processed_filepath):
+                        self.processed_filepaths.append(processed_filepath)
                     continue
 
                 reaction = reaction_record(reaction_smiles, self.SUBSTRUCTURE_KEYS)
@@ -197,8 +211,8 @@ class reaction_record_dataset(Dataset):
                 if self.pre_transform is not None:
                     reaction = self.pre_transform(reaction)
 
-                torch.save(reaction, proccessed_filepath)
-                self.processed_filepaths.append(proccessed_filepath)
+                torch.save(reaction, processed_filepath)
+                self.processed_filepaths.append(processed_filepath)
 
     def len(self):
         """Get length of reaction dataset."""
@@ -206,8 +220,14 @@ class reaction_record_dataset(Dataset):
 
     def get(self, idx):
         """Get data point for given reaction-idx."""
-        processed_filepath = self.processed_filepaths[idx]
-        reaction_data = torch.load(processed_filepath) # load graph
+        successful = False
+        while not successful:
+            try:
+                processed_filepath = self.processed_filepaths[idx]
+                reaction_data = torch.load(processed_filepath) # load graph
+                successful = True
+            except: # Try another index
+                idx = random.randint(0, len(self.processed_filepaths) - 1)
 
         # load substruct-pair selectors and target
         selector_i, selector_j, target = \
