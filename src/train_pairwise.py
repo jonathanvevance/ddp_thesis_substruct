@@ -60,7 +60,6 @@ def train():
 
             ## STEP 1: Standard Message passing operation on the graph
             # train_batch.x = 'BATCH' graph and train_batch.edge_matrix = 'BATCH' edge matrix
-            print(train_batch.x.shape, train_batch.edge_index.shape, train_batch.edge_attr.shape)
             atom_mpnn_features = model_mpnn(
                 train_batch.x.float(), train_batch.edge_index, train_batch.edge_attr.float()
             )
