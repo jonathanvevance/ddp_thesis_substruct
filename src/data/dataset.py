@@ -118,6 +118,8 @@ class reaction_record:
         except:
             print(len(self.pos_substructs_and_tgts))
             print(len(self.neg_substructs_and_tgts))
+            print("-----------")
+            print(self.is_valid())
 
         atom_idx_list_i = sorted([(atom_map - 1) for atom_map in self.matches[i]])
         atom_idx_list_j = sorted([(atom_map - 1) for atom_map in self.matches[j]])
