@@ -108,18 +108,12 @@ class reaction_record:
             int(interacting): 1 or 0 if the pair is interacting.
         """
 
-        try:
-            if random.uniform(0, 1) < sample_pos_fraction:
-                pos_pair_idx = random.randint(0, len(self.pos_substructs_and_tgts) - 1)
-                i, j, interacting = self.pos_substructs_and_tgts[pos_pair_idx]
-            else:
-                neg_pair_idx = random.randint(0, len(self.neg_substructs_and_tgts) - 1)
-                i, j, interacting = self.neg_substructs_and_tgts[neg_pair_idx]
-        except:
-            print(len(self.pos_substructs_and_tgts))
-            print(len(self.neg_substructs_and_tgts))
-            print("-----------")
-            print(self.is_valid())
+        if random.uniform(0, 1) < sample_pos_fraction:
+            pos_pair_idx = random.randint(0, len(self.pos_substructs_and_tgts) - 1)
+            i, j, interacting = self.pos_substructs_and_tgts[pos_pair_idx]
+        else:
+            neg_pair_idx = random.randint(0, len(self.neg_substructs_and_tgts) - 1)
+            i, j, interacting = self.neg_substructs_and_tgts[neg_pair_idx]
 
         atom_idx_list_i = sorted([(atom_map - 1) for atom_map in self.matches[i]])
         atom_idx_list_j = sorted([(atom_map - 1) for atom_map in self.matches[j]])
