@@ -103,9 +103,9 @@ def train():
 
             # print statistics
             running_loss += loss.item()
-            if idx % 5 == 4:    # print every 500 mini-batches
+            if idx % 100 == 99:    # print every 100 mini-batches
                 save_models(cfg, model_mpnn, model_feedforward, model_scoring)
-                print(f'[{epoch + 1}, {idx + 1:5d}] loss: {running_loss}')
+                print(f'At epoch: {epoch + 1}, minibatch: {idx + 1:5d} | running_loss: {running_loss}')
                 running_loss = 0.0
 
     print('Finished Training')
