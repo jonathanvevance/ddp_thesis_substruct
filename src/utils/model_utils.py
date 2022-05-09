@@ -8,6 +8,16 @@ from models.mpnn_models import GAT_2layer
 from models.mlp_models import NeuralNet
 from models.mlp_models import ScoringNetwork
 
+def set_train_mode(models):
+    for model in models:
+        model.train()
+
+
+def set_eval_mode(models):
+    for model in models:
+        model.eval()
+
+
 def load_models(cfg):
 
     # model_mpnn = GAT_2layer(2, 32, 'train')
