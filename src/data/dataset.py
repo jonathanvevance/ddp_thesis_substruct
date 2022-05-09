@@ -14,8 +14,8 @@ from rdkit_helpers.generic import get_map_to_id_dict
 from rdkit_helpers.substructures import get_substruct_matches
 from rdkit_helpers.features import get_pyg_graph_requirements
 
-# PROCESSED_DATASET_LOC = 'data/processed/'
-PROCESSED_DATASET_LOC = 'data/temp/'
+PROCESSED_DATASET_LOC = 'data/processed/'
+# PROCESSED_DATASET_LOC = 'data/temp/'
 
 def reaction_filter(reaction):
     return reaction.is_valid()
