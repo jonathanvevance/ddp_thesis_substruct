@@ -1,4 +1,4 @@
-rxn_pred_ddp_thesis
+ddp_thesis_substruct
 ==============================
 
 Reaction outcome prediction (IITM DDP Thesis)
