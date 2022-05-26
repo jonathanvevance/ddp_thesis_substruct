@@ -22,13 +22,6 @@ class GCN_2layer(torch.nn.Module):
 
     def forward(self, x, edge_index, edge_attr):
 
-        #! NOTE
-        # print(x.shape)
-        # atomic_num, formal_charge = torch.split(x, 1, dim = 1)
-        # xx = torch.nn.Embedding(10000, 256)(atomic_num.to(torch.int32)).sqeeze()
-        # print(xx.shape)
-        #! NOTE
-
         x = self.conv1(x, edge_index, edge_attr)
         # x = self.conv1(x, edge_index)
         x = F.relu(x)

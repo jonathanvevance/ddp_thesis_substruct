@@ -37,24 +37,28 @@ def train():
     )
     train_loader = DataLoader(train_dataset, batch_size = cfg.BATCH_SIZE, shuffle = True)
 
-    # ----- Load models
-    model_mpnn, model_feedforward, model_scoring = load_models(cfg)
-
     # ----- Get available device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cpu')
+
+    # ----- Load models
+    model_mpnn, model_feedforward, model_scoring, model_embedding = load_models(cfg)
     model_mpnn = model_mpnn.to(device)
-    model_feedforward = model_feedforward.to(device)
     model_scoring = model_scoring.to(device)
+    model_params = [model_mpnn.parameters(), model_scoring.parameters()]
+
+    if model_feedforward:
+        model_feedforward = model_feedforward.to(device)
+        model_params = model_params + [model_feedforward.parameters()]
+
+    if model_embedding:
+        model_embedding = model_embedding.to(device)
+        model_params = model_params + [model_embedding.parameters()]
 
     # ----- Load training settings
-    all_params = chain(
-        model_mpnn.parameters(), model_feedforward.parameters(), model_scoring.parameters())
+    all_params = chain(*model_params)
     optimizer = torch.optim.Adam(all_params, lr = cfg.LR, weight_decay = cfg.WEIGHT_DECAY)
     criterion = torch.nn.BCELoss()
-
-    # TODO: have to construct actual graph 'batch' using index 'batch'.
-    # TODO: Better = have an 'embedder' model and take care of batching ...
-    # TODO: ... in the training loop.
 
     for epoch in range(cfg.EPOCHS):
         running_loss = 0.0
@@ -62,26 +66,32 @@ def train():
             train_batch = train_batch.to(device)
             optimizer.zero_grad()
 
-            ## STEP 1: Standard Message passing operation on the graph
+            ## STEP 1: Get embeddings of graph features
+            if model_embedding:
+                graph_x, graph_edge_attr = model_embedding(train_batch.x, train_batch.edge_attr)
+            else:
+                graph_x = train_batch.x.float()
+                graph_edge_attr = train_batch.edge_attr.float()
+
+            ## STEP 2: Standard Message passing operation on the graph
             # train_batch.x = 'BATCH' graph and train_batch.edge_matrix = 'BATCH' edge matrix
-            atom_mpnn_features = model_mpnn(
-                train_batch.x.float(), train_batch.edge_index, train_batch.edge_attr.float()
-            )
+            atom_features = model_mpnn(graph_x, train_batch.edge_index, graph_edge_attr)
 
-            ## STEP 2: Forward pass on atom features using a feedforward network
-            atom_mlp_features = model_feedforward(atom_mpnn_features)
+            ## STEP 3: Forward pass on atom features using a feedforward network
+            if model_feedforward:
+                atom_features = model_feedforward(atom_features)
 
-            ## STEP 3: Select atoms involved in the sampled substructure-pairs
+            ## STEP 4: Select atoms involved in the sampled substructure-pairs
             # select atoms (from all reactions in the batch), involved in the first
             # substructure of the randomly sampled substructure pairs.
             select_atoms_batch_i = torch.nonzero(train_batch.selector_i, as_tuple=True)
-            selected_atom_features_i = atom_mlp_features[select_atoms_batch_i]
+            selected_atom_features_i = atom_features[select_atoms_batch_i]
             rxn_indices_i = train_batch.batch[select_atoms_batch_i]
 
             # select atoms (from all reactions in the batch), involved in the second
             # substructure of the randomly sampled substructure pairs.
             select_atoms_batch_j = torch.nonzero(train_batch.selector_j, as_tuple=True)
-            selected_atom_features_j = atom_mlp_features[select_atoms_batch_j]
+            selected_atom_features_j = atom_features[select_atoms_batch_j]
             rxn_indices_j = train_batch.batch[select_atoms_batch_j]
 
             # Note: train_batch.batch contains atom labels that gives us the information on
@@ -90,7 +100,7 @@ def train():
             assert len(selected_atom_features_i) == len(rxn_indices_i) # True
             assert len(selected_atom_features_j) == len(rxn_indices_j) # True
 
-            ## STEP 4: Mean-aggregate atom features into substructure features
+            ## STEP 5: Mean-aggregate atom features into substructure features
             substruct_features_i = groupby_mean_tensors(
                 selected_atom_features_i, rxn_indices_i
             )
