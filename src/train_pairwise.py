@@ -41,8 +41,7 @@ def train():
     model_mpnn, model_feedforward, model_scoring = load_models(cfg)
 
     # ----- Get available device
-    device = torch.device('cpu') #!!!!!
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_mpnn = model_mpnn.to(device)
     model_feedforward = model_feedforward.to(device)
     model_scoring = model_scoring.to(device)
@@ -52,6 +51,10 @@ def train():
         model_mpnn.parameters(), model_feedforward.parameters(), model_scoring.parameters())
     optimizer = torch.optim.Adam(all_params, lr = cfg.LR, weight_decay = cfg.WEIGHT_DECAY)
     criterion = torch.nn.BCELoss()
+
+    # TODO: have to construct actual graph 'batch' using index 'batch'.
+    # TODO: Better = have an 'embedder' model and take care of batching ...
+    # TODO: ... in the training loop.
 
     for epoch in range(cfg.EPOCHS):
         running_loss = 0.0
