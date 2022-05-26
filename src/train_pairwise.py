@@ -41,7 +41,8 @@ def train():
     model_mpnn, model_feedforward, model_scoring = load_models(cfg)
 
     # ----- Get available device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu') #!!!!!
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_mpnn = model_mpnn.to(device)
     model_feedforward = model_feedforward.to(device)
     model_scoring = model_scoring.to(device)

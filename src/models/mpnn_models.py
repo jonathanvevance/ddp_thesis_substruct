@@ -10,7 +10,7 @@ from torch_geometric.nn import GATConv
 
 # https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html
 class GCN_2layer(torch.nn.Module):
-    def __init__(self, in_features, out_features, embedding_dims, mode = 'train'):
+    def __init__(self, in_features, out_features, mode = 'train'):
         super().__init__()
         self.mode = mode
         self.conv1 = GeneralConv(in_features, 16, in_edge_channels = 2) # TODO: put 2 in cfg
@@ -21,6 +21,13 @@ class GCN_2layer(torch.nn.Module):
         # self.conv2 = GCNConv(16, out_features)
 
     def forward(self, x, edge_index, edge_attr):
+
+        #! NOTE
+        # print(x.shape)
+        # atomic_num, formal_charge = torch.split(x, 1, dim = 1)
+        # xx = torch.nn.Embedding(10000, 256)(atomic_num.to(torch.int32)).sqeeze()
+        # print(xx.shape)
+        #! NOTE
 
         x = self.conv1(x, edge_index, edge_attr)
         # x = self.conv1(x, edge_index)
