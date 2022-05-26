@@ -7,6 +7,11 @@ def get_pyg_graph_requirements(mol):
     num_atoms = mol.GetNumAtoms()
     num_bonds = mol.GetNumBonds()
 
+    # TODO: remove this structuring from here and put in model part
+    # TODO: have to construct actual graph 'batch' using index 'batch'.
+    # TODO: Better = have an 'embedder' model and take care of batching ...
+    # TODO: ... in the training loop.
+
     x = [[None for __ in range(num_atom_features)]
                for __ in range(num_atoms)] # (num_atoms x num_atom_features)
 
