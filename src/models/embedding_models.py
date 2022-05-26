@@ -1,5 +1,6 @@
 """Python file with atomic number, charge, etc embedder."""
 
+import math
 import torch
 import torch.nn as nn
 
@@ -13,6 +14,7 @@ class FeatureEmbedding(nn.Module):
         num_unique_bonds = 10,
     ):
         super().__init__()
+        self.num_unique_charges = num_unique_charges
         self.atomic_num_embedding = nn.Embedding(num_unique_atoms, embedding_dim)
         self.formal_charge_embedding = nn.Embedding(num_unique_charges, embedding_dim)
         self.bond_num_embedding = nn.Embedding(num_unique_bonds, embedding_dim)
@@ -20,20 +22,15 @@ class FeatureEmbedding(nn.Module):
 
     def forward(self, graph_x, graph_edge_attr):
 
-        atomic_nums, formal_charges = torch.split(graph_x, 1, dim = 1) #! TODO: check below
-        print(atomic_nums.shape)
-        print(torch.max(atomic_nums))
-        print(torch.max(formal_charges))
+        atomic_nums, formal_charges = torch.split(graph_x, 1, dim = 1)
+        # IMPORTANT: to get whole number formal charges (used as indices)
+        formal_charges = formal_charges + math.ceil(self.num_unique_charges / 2)
 
-        # atomic_nums_embedding = self.atomic_num_embedding(atomic_nums.to(torch.int32)).sqeeze()
-        # formal_charges_embedding = self.formal_charge_embedding(formal_charges.to(torch.int32)).sqeeze()
         atomic_nums_embedding = self.atomic_num_embedding(atomic_nums).squeeze()
         formal_charges_embedding = self.formal_charge_embedding(formal_charges).squeeze()
         atom_features = torch.cat((atomic_nums_embedding, formal_charges_embedding), dim = 1)
 
-        bond_nums, aromaticity = torch.split(graph_edge_attr, 1, dim = 1) #! TODO: check below
-        # bond_nums_embedding = self.bond_num_embedding(bond_nums.to(torch.int32)).sqeeze()
-        # aromaticity_embedding = self.aromaticity_embedding(aromaticity.to(torch.int32)).sqeeze()
+        bond_nums, aromaticity = torch.split(graph_edge_attr, 1, dim = 1)
         bond_nums_embedding = self.bond_num_embedding(bond_nums).squeeze()
         aromaticity_embedding = self.aromaticity_embedding(aromaticity).squeeze()
         edge_features = torch.cat((bond_nums_embedding, aromaticity_embedding), dim = 1)

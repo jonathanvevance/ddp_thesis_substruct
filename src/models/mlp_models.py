@@ -7,9 +7,9 @@ class NeuralNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.layers = nn.ModuleList([
-            nn.Linear(32, 64),
+            nn.Linear(256, 512),
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(512, 512),
             nn.ReLU(),
         ])
 
@@ -22,12 +22,12 @@ class ScoringNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         self.shared_layers = nn.ModuleList([
-            nn.Linear(64, 64),
+            nn.Linear(512, 512),
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(512, 512),
             nn.ReLU(),
         ])
-        self.concat_mlp = nn.Linear(128, 1)
+        self.concat_mlp = nn.Linear(1024, 1)
 
     def forward(self, x1, x2):
 

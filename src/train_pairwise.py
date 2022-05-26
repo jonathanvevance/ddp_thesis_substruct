@@ -4,7 +4,6 @@ import os
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 import torch
 from itertools import chain
-from tqdm import tqdm
 from torch_geometric.loader import DataLoader
 # TODO: Look at torch_geometric.data.LightningDataset for multi-GPU training
 
@@ -39,9 +38,9 @@ def train():
 
     # ----- Get available device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # device = torch.device('cpu')
 
     # ----- Load models
+    cfg.MPNN_FEATURES_DIM = (2 * cfg.EMBEDDING_DIM) if cfg.USE_EMBEDDING else 2
     model_mpnn, model_feedforward, model_scoring, model_embedding = load_models(cfg)
     model_mpnn = model_mpnn.to(device)
     model_scoring = model_scoring.to(device)
@@ -108,7 +107,7 @@ def train():
                 selected_atom_features_j, rxn_indices_j
             )
 
-            ## STEP 5: Produce interaction score using substructure-features-pair
+            ## STEP 6: Produce interaction score using substructure-features-pair
             scores = model_scoring(substruct_features_i, substruct_features_j)
             loss = criterion(scores, train_batch.target.unsqueeze(1).float())
 

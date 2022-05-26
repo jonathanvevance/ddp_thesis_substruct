@@ -27,7 +27,7 @@ def load_models(cfg):
         model_embedding = None
 
     model_feedforward = NeuralNet() if cfg.USE_MLP_FOR_PROCESSING else None
-    model_mpnn = GCN_2layer(2, 32, 'train')
+    model_mpnn = GCN_2layer(cfg.MPNN_FEATURES_DIM, 256, 'train')
     model_scoring = ScoringNetwork()
 
     # if saved model exists, load it
