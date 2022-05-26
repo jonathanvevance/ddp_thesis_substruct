@@ -28,9 +28,13 @@ def load_models(cfg):
     # if saved model exists, load it
     if cfg.LOAD_MODEL_PATH and os.path.exists(cfg.LOAD_MODEL_PATH):
         model_weights = torch.load(cfg.LOAD_MODEL_PATH)
-        model_mpnn.load_state_dict(model_weights['mpnn'])
-        model_feedforward.load_state_dict(model_weights['feedforward'])
-        model_scoring.load_state_dict(model_weights['scoring'])
+        try:
+            model_mpnn.load_state_dict(model_weights['mpnn'])
+            model_feedforward.load_state_dict(model_weights['feedforward'])
+            model_scoring.load_state_dict(model_weights['scoring'])
+
+        except:  # fails at mpnn if it fails at all
+            pass
 
     return model_mpnn, model_feedforward, model_scoring
 
