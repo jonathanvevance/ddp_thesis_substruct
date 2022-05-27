@@ -5,7 +5,6 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 import torch
 from itertools import chain
 from torch_geometric.loader import DataLoader
-# TODO: Look at torch_geometric.data.LightningDataset for multi-GPU training
 
 import configs.train_pairwise_cfg as cfg
 from data.dataset import reaction_record_dataset
@@ -117,7 +116,7 @@ def train():
             # print statistics
             running_loss += loss.item()
             if idx % 100 == 99:    # print every 100 mini-batches
-                save_models(cfg, model_mpnn, model_feedforward, model_scoring)
+                save_models(cfg, model_mpnn, model_feedforward, model_scoring, model_embedding)
                 print(f'At epoch: {epoch + 1}, minibatch: {idx + 1:5d} | running_loss: {running_loss}')
                 running_loss = 0.0
 
