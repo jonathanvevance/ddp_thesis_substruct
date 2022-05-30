@@ -39,7 +39,6 @@ def train():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # ----- Load models
-    cfg.MPNN_FEATURES_DIM = (2 * cfg.EMBEDDING_DIM) if cfg.USE_EMBEDDING else 2
     model_mpnn, model_feedforward, model_scoring, model_embedding = load_models(cfg)
     model_mpnn = model_mpnn.to(device)
     model_scoring = model_scoring.to(device)
