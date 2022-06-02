@@ -60,6 +60,20 @@ class reaction_record:
                 molid_i = self.map_to_molid_dict[atom_map_tuple_i[0]]
                 molid_j = self.map_to_molid_dict[atom_map_tuple_j[0]]
 
+                """
+                molid_is = set()
+                for atom_map in atom_map_tuple_i:
+                    molid_is.add(self.map_to_molid_dict[atom_map])
+                assert len(molid_is) == 1
+
+                molid_js = set()
+                for atom_map in atom_map_tuple_j:
+                    molid_js.add(self.map_to_molid_dict[atom_map])
+                assert len(molid_js) == 1
+
+                # These checks pass
+                """
+
                 if molid_i == molid_j: # no interaction within same molecule
                     continue
 
@@ -68,6 +82,14 @@ class reaction_record:
                 all_atom_pairs_tuples = nested2d_generator(
                     atom_map_tuple_i, atom_map_tuple_j
                 )
+
+                """
+                for atom_map_i, atom_map_j in all_atom_pairs_tuples:
+                    if atom_map_i == atom_map_j:
+                        raise RuntimeError("This is not right")
+
+                # This runs without error
+                """
 
                 for atom_map_i, atom_map_j in all_atom_pairs_tuples:
 
@@ -233,6 +255,17 @@ class reaction_record_dataset(Dataset):
         # https://pytorch-geometric.readthedocs.io/en/latest/notes/batching.html
         reaction_data.pyg_data.selector_i = torch.tensor(selector_i)
         reaction_data.pyg_data.selector_j = torch.tensor(selector_j)
+
+        """
+        def intersection(lst1, lst2):
+            return list(set(lst1) & set(lst2))
+
+        if len(intersection(selector_i, selector_j)):
+            raise RuntimeError("Common atoms in substructure matches i and j")
+
+        # This gives runtime error. Reason = ???
+        """
+
         reaction_data.pyg_data.target = target
 
         return reaction_data.pyg_data

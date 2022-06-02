@@ -27,7 +27,7 @@ class ScoringNetwork(nn.Module):
             nn.Linear(512, 256),
             nn.ReLU(),
         ])
-        self.concat_mlp = nn.Linear(512, 1)
+        self.concat_mlp = nn.Linear(256, 1)
 
     def forward(self, x1, x2):
 
@@ -37,8 +37,7 @@ class ScoringNetwork(nn.Module):
         for layer in self.shared_layers:
             x2 = layer(x2)
 
-        x = torch.cat((x1, x2), dim = 1)
-        return torch.sigmoid(self.concat_mlp(x))
+        return torch.sigmoid(self.concat_mlp(x1 + x2))
 
 # TODO: research common (graph or just vector) aggregation strategies
 # TODO: Ex. like there exists for attention mechanism
