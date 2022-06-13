@@ -13,8 +13,8 @@ class GCN_2layer(torch.nn.Module):
     def __init__(self, in_features, out_features, mode = 'train'):
         super().__init__()
         self.mode = mode
-        self.conv1 = GeneralConv(in_features, 256, in_edge_channels = in_features)
-        self.conv2 = GeneralConv(256, out_features, in_edge_channels = in_features)
+        self.conv1 = GeneralConv(in_features, 256, in_edge_channels = in_features) # in_edge_channels = in_features (HERE)
+        self.conv2 = GeneralConv(256, out_features, in_edge_channels = in_features)  # in_edge_channels = in_features (HERE)
 
         # mpnn without edge attributes
         # self.conv1 = GCNConv(in_features, 256)
@@ -38,9 +38,9 @@ class GAT_2layer(torch.nn.Module):
         in_head, out_head = 8, 1
         self.mode = mode
         self.conv1 = GATv2Conv(
-            in_features, 256, heads = in_head, dropout = 0.6, edge_dim = in_features)
+            in_features, 256, heads = in_head, dropout = 0.6, edge_dim = in_features) # edge_dim = in_features (HERE)
         self.conv2 = GATv2Conv(
-            16 * in_head, out_features, concat = False, heads = out_head, dropout = 0.6, edge_dim = in_features)
+            16 * in_head, out_features, concat = False, heads = out_head, dropout = 0.6, edge_dim = in_features) # edge_dim = in_features (HERE)
 
         # mpnn without edge attributes
         # self.conv1 = GATConv(
