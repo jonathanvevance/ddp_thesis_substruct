@@ -13,8 +13,8 @@ class GCN_2layer(torch.nn.Module):
     def __init__(self, in_features, out_features, mode = 'train'):
         super().__init__()
         self.mode = mode
-        self.conv1 = GeneralConv(in_features, 256, in_edge_channels = in_features) # TODO: put 2 in cfg
-        self.conv2 = GeneralConv(256, out_features, in_edge_channels = in_features) # TODO: put 2 in cfg
+        self.conv1 = GeneralConv(in_features, 256, in_edge_channels = in_features)
+        self.conv2 = GeneralConv(256, out_features, in_edge_channels = in_features)
 
         # mpnn without edge attributes
         # self.conv1 = GCNConv(in_features, 256)
