@@ -130,50 +130,45 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 ------------
 
     ├── LICENSE
-    ├── README.md          <- The top-level README for developers using this project.
+    ├── README.md               <- The top-level README for developers using this project.
     ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
+    │   ├── external            <- Data from third party sources.
+    │   ├── interim             <- Intermediate data that has been transformed.
+    │   ├── processed           <- The final, canonical data sets for modeling.
+    │   └── raw                 <- The original, immutable data dump.
     │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
+    ├── models                  <- Trained and serialized models, model predictions, or model summaries
     │
-    ├── notebooks          <- Jupyter notebooks for running explorations and tests.
+    ├── notebooks               <- Jupyter notebooks for running explorations and tests.
     │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc. [EMPTY]
-    │   └── figures        <- Generated graphics and figures to be used in reporting [EMPTY]
+    ├── reports                 <- Generated analysis as HTML, PDF, LaTeX, etc. [EMPTY]
+    │   └── figures             <- Generated graphics and figures to be used in reporting [EMPTY]
     │
-    ├── requirements.txt   <- The requirements file [UNUSED. FOLLOW INSTRUCTIONS ABOVE FOR ENVIRONMENT SETUP]
+    ├── requirements.txt        <- The requirements file [UNUSED. FOLLOW INSTRUCTIONS ABOVE FOR ENVIRONMENT SETUP]
     │
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
+    ├── src                     <- Source code for use in this project.
+    │   ├── __init__.py         <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to help with dataset loading
-    │   │   └── dataset.py <- Python file containing class definitions for dataset loading
+    │   ├── data                <- Scripts to help with dataset loading
+    │   │   └── dataset.py            <- Python file containing class definitions for dataset loading
     |   |
-    │   ├── models         <- Scripts containing model definitions
+    │   ├── models              <- Scripts containing model definitions
     │   │   ├── embedding_models.py   <- Python file containing Embedding class definitions
     │   │   └── mlp_models.py         <- Python file containing Feedforward model class definitions
     │   │   └── mpnn_models.py        <- Python file containing graph neural network (GNN) model class definitions
     │   │
-    │   ├── rdkit_helpers  <- Scripts containing helpers for RDKit operations
+    │   ├── rdkit_helpers       <- Scripts containing helpers for RDKit operations
     │   │   ├── features.py           <- Python file to extract molecular graph features
     │   │   ├── generic.py            <- Python file containing generic helpers for RDKit operations
     │   │   └── substructure_keys.py  <- Python file containing SMARTS strings for fingerprints
     │   │   └── substructures.py      <- Python file to match MACCS substructures with molecules
     │   │
-    │   ├── utils          <- Scripts for basic operations
-    │   │   ├── data_utils.py         <- Python file containing util functions concerning data
-    │   │   ├── generic.py            <- Python file containing generic helpers for RDKit operations
-    │   │   └── substructure_keys.py  <- Python file containing SMARTS strings for fingerprints
-    │   │   └── substructures.py      <- Python file to match MACCS substructures with molecules
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-
+    │   ├── utils               <- Scripts for basic operations
+    │   │   ├── generic.py            <- Python file containing generic helpers
+    │   │   └── model_utils.py        <- Python file containing helpers for saving and loading models
+    │   |
+    │   ├── prepare_dataset.py  <- Python file to prepare dataset
+    │   ├── train_pairwise.py   <- Python file to train the classification model
 
 --------
 
