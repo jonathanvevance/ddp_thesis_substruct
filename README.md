@@ -100,7 +100,7 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
 
 ### Training the classification model:
 
-1.  After <a href="### Preparing the dataset for training">preparing the dataset</a>:
+1.  After <a href="#preparing-the-dataset-for-training">preparing the dataset</a>:
 
         eval_dataset
             ├── scoring_clips
