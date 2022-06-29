@@ -89,27 +89,18 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
 
 ## Usage
 
-### Preparing the dataset
+### Preparing the dataset for training
 
-1. Go to root of repo folder
-2. In one terminal, from root directory, start Python server by
+1. Place the training dataset (text file with reaction smiles) in data/raw as train.txt.
+2. Activate the conda environment. 
+4. From the root directory, run
    ```sh
-   source .env/bin/activate
-   python3 src/server.py
+   python src/prepare_dataset.py
    ```
-3. In second terminal, from root directory, start the backend nodeJS server,
-   ```sh
-   node src/server/server.js
-   ```
-4. In third Terminal, from root directory, start the frontend UI by,
-   ```sh
-   serve -s src/build
-   ```
-   Go to link shown in the terminal. Or open a browser and use this [link](http://localhost:3000)
 
 ### Training the classification model:
 
-1.  Place the dataset in data/evaluation/eval_dataset folder. The folder structure expected is:
+1.  After <a href="### Preparing the dataset for training">preparing the dataset</a>:
 
         eval_dataset
             ├── scoring_clips
