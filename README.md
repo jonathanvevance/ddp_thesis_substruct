@@ -26,15 +26,19 @@
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
+    <li>
+      <a href="#usage">Usage</a>
+      <ul>
+        <li><a href="#preparing-the-dataset-for-training">Preparing the dataset</a></li>
+        <li><a href="#training-the-classification-model">Training the classification model</a></li>
+      </ul>
+    </li>
+    
+    <li><a href="#project-organization">Project Organization</a></li>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
@@ -116,14 +120,6 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
     
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- LICENSE -->
-
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 <!-- FOLDER STRUCTURE -->
 
 ## Project Organization
@@ -171,5 +167,13 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
     │   ├── train_pairwise.py   <- Python file to train the classification model
 
 --------
+
+<!-- LICENSE -->
+
+## License
+
+Distributed under the MIT License. See `LICENSE.txt` for more information.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
