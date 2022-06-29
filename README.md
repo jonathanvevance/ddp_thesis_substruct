@@ -126,6 +126,13 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
 
     ├── LICENSE
     ├── README.md               <- The top-level README for developers using this project.
+    |
+    ├── kube_files              <- Contains files for running Kubernetes jobs
+    │   ├── job.yaml            <- YAML file for creating and running a job
+    │   ├── logs.txt            <- Text file for logging what gets printed
+    │   ├── run.sh              <- The shell file that gets run in the job
+    │   └── torch_debug.py      <- File for testing the environment within the job
+    |
     ├── data
     │   ├── external            <- Data from third party sources.
     │   ├── interim             <- Intermediate data that has been transformed.
