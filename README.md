@@ -126,6 +126,7 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
 
     ├── LICENSE
     ├── README.md               <- The top-level README for developers using this project.
+    ├── .gitignore              <- Git-ignore file
     |
     ├── kube_files              <- Contains files for running Kubernetes jobs
     │   ├── job.yaml            <- YAML file for creating and running a job
@@ -142,9 +143,6 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
     ├── models                  <- Trained and serialized models, model predictions, or model summaries
     │
     ├── notebooks               <- Jupyter notebooks for running explorations and tests.
-    │
-    ├── reports                 <- Generated analysis as HTML, PDF, LaTeX, etc. [EMPTY]
-    │   └── figures             <- Generated graphics and figures to be used in reporting [EMPTY]
     │
     ├── requirements.txt        <- The requirements file [UNUSED. FOLLOW INSTRUCTIONS ABOVE FOR ENVIRONMENT SETUP]
     │
