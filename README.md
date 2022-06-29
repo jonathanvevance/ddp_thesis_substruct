@@ -93,6 +93,9 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
 
 1. Place the training dataset (text file with reaction smiles) in data/raw as train.txt.
 2. Activate the conda environment. 
+   ```sh
+    conda activate envname
+    ```
 4. From the root directory, run
    ```sh
    python src/prepare_dataset.py
@@ -101,36 +104,16 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
 ### Training the classification model:
 
 1.  Prerequisite: <a href="#preparing-the-dataset-for-training">Preparing the dataset for training</a>:
-
-        eval_dataset
-            ├── scoring_clips
-                ├── clip_1.mp4
-                ├── clip_2.mp4
-                ├── ...
-            ├── non_scoring_clips
-                ├── clip_4.mp4
-                ├── clip_6.mp4
-                ├── ...
-
-2.  2. From the root directory, activate the python venv by running:
+2.  Activate the conda environment.
     ```sh
-    source .env/bin/activate
+    conda activate envname
     ```
-3.  Edit the src/configs/eval_config.py file with the required evaluation settings.
-4.  From the root directory, start training by running:
+3.  Edit src/configs/train_cfg.py file with the required training settings.
+4.  From the root directory, run
     ```sh
-    python src/evaluate.py
+    python src/train_pairwise.py
     ```
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- ROADMAP -->
-
-## Roadmap
-
-- [] Interactive video player with seek bar in the web application.
-- [] Inference speedup using TensorRT on GPU and Intel OpenVino on Intel CPU.
-
+    
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- LICENSE -->
@@ -141,39 +124,9 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-<!-- CONTACT -->
+<!-- FOLDER STRUCTURE -->
 
-## Contact Us
-
-<!-- Jonathan Ve Vance - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com -->
-
-1. Jonathan Ve Vance - [Linkedin](https://linkedin.com/in/jonathanvevance) - jonathanvevance@gmail.com
-2. Irfan Thayyil - [LinkedIn](https://www.linkedin.com/in/mohammed-irfan-thayyil-34311a166) -irfanthayyil@gmail.com
-3. Adil Muhammed K - [LinkedIn](https://www.linkedin.com/in/adil-mohammed-065603155) - adilmohammed2000@outlook.com
-4. Akshay Krishna - [LinkedIn](https://www.linkedin.com/in/akshaykrishh/) - akshaykrishnakanth@gmail.com
-
-Project Link: [https://github.com/jonathanvevance/basketall_scoring_detection](https://github.com/jonathanvevance/basketall_scoring_detection)
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- ACKNOWLEDGMENTS -->
-
-## Acknowledgments
-
-- []() We obtained pretrained weights for basket (hoop) detector yolov3 model from <a href = "https://github.com/SkalskiP/ILearnDeepLearning.py"> this great repository</a>. Huge shoutout to the author.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- MARKDOWN LINKS & IMAGES -->
-
-[product-screenshot]: readme_images/app_screenshot.png
-
-ddp_thesis_substruct
-==============================
-
-Reaction outcome prediction (IITM DDP Thesis)
-
-Project Organization
+## Project Organization
 ------------
 
     ├── LICENSE
@@ -186,29 +139,35 @@ Project Organization
     │
     ├── models             <- Trained and serialized models, model predictions, or model summaries
     │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
+    ├── notebooks          <- Jupyter notebooks for running explorations and tests.
     │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
+    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc. [EMPTY]
+    │   └── figures        <- Generated graphics and figures to be used in reporting [EMPTY]
     │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
+    ├── requirements.txt   <- The requirements file [UNUSED. FOLLOW INSTRUCTIONS ABOVE FOR ENVIRONMENT SETUP]
     │
     ├── src                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
+    │   ├── data           <- Scripts to help with dataset loading
+    │   │   └── dataset.py <- Python file containing class definitions for dataset loading
+    |   |
+    │   ├── models         <- Scripts containing model definitions
+    │   │   ├── embedding_models.py   <- Python file containing Embedding class definitions
+    │   │   └── mlp_models.py         <- Python file containing Feedforward model class definitions
+    │   │   └── mpnn_models.py        <- Python file containing graph neural network (GNN) model class definitions
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
+    │   ├── rdkit_helpers  <- Scripts containing helpers for RDKit operations
+    │   │   ├── features.py           <- Python file to extract molecular graph features
+    │   │   ├── generic.py            <- Python file containing generic helpers for RDKit operations
+    │   │   └── substructure_keys.py  <- Python file containing SMARTS strings for fingerprints
+    │   │   └── substructures.py      <- Python file to match MACCS substructures with molecules
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
+    │   ├── utils          <- Scripts for basic operations
+    │   │   ├── data_utils.py         <- Python file containing util functions concerning data
+    │   │   ├── generic.py            <- Python file containing generic helpers for RDKit operations
+    │   │   └── substructure_keys.py  <- Python file containing SMARTS strings for fingerprints
+    │   │   └── substructures.py      <- Python file to match MACCS substructures with molecules
     │   │
     │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
     │       └── visualize.py
