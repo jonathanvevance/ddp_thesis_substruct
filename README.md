@@ -26,7 +26,7 @@
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
-        <li><a href="#setting-up-the-conda-environment">Installation</a></li>
+        <li><a href="#setting-up-the-conda-environment">Setting up the conda environment</a></li>
       </ul>
     </li>
     <li>
@@ -36,7 +36,6 @@
         <li><a href="#training-the-classification-model">Training the classification model</a></li>
       </ul>
     </li>
-    
     <li><a href="#project-organization">Project Organization</a></li>
     <li><a href="#license">License</a></li>
   </ol>
