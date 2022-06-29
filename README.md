@@ -151,6 +151,9 @@ Note that the code has been run and verified on Ubuntu as well as Windows system
     │   │
     │   ├── data                <- Scripts to help with dataset loading
     │   │   └── dataset.py            <- Python file containing class definitions for dataset loading
+    │   │
+    │   ├── configs             <- Folder containing config files for training, evaluation, etc
+    │   │   └── train_cfg.py          <- Python file containing training settings
     |   |
     │   ├── models              <- Scripts containing model definitions
     │   │   ├── embedding_models.py   <- Python file containing Embedding class definitions
