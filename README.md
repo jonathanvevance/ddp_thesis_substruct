@@ -50,7 +50,7 @@ This is a DL based approach devised for reaction outcome prediction as part of m
 
 - [Pytorch](https://pytorch.org//)
 - [Pytorch-Geometric](https://pytorch-geometric.readthedocs.io/en/)
-- [RDKit](https://www.rdkit.org/docs/GettingStartedInPython.html)
+- [RDKit-Python](https://www.rdkit.org/docs/GettingStartedInPython.html)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
